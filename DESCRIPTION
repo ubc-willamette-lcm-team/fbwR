@@ -1,0 +1,13 @@
+Package: fbwR
+Title: Fish Benefits Workbook in R: Estimating Downstream Fish Passage and Survival
+Version: 0.0.0.1
+Authors@R: 
+    person("Mairin", "Deith", , "mairin.deith@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = ""))
+Description: The Fish Benefits Workbook (FBW) is a series of calculations to calculate
+estimated 
+
+License: use_gpl3_license()
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.1
