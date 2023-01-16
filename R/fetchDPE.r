@@ -4,16 +4,17 @@
 #' @param ressim_data Data frame including at least the following column names:
 #' elev (pool elevation, one per day in the period of record); 
 #' @param resv_data A list including at least the following named object: 
-#' route_dpe (a dataframe including columns "elev", "baseline_dpe", and any 
+#' route_dpe (a dataframe including columns `elev`, `baseline_dpe`, and any 
 #' number of other columns to the right of these that can be used to look up DPE
 #' at various pool elevations) 
 #' @param quickset_data A list including named entries for the following: 
-#' fps_max elev (a single value, maximum pool elevation at which the fish 
-#' passage structure can operate), fps_bottom_elev (a single value, minimum 
-#' pool elevation at which the fish passage structure can operate), and 
-#' dpe_x_position (which column of the DPE lookup table provided in resv_data
-#' should be used to calculate DPE at various pool elevations? Used to determine
-#' which column of "route_dpe" AFTER the baseline should be selected?
+#' 1. `fps_max_elev`: a single numeric value, the maximum pool elevation at 
+#'   which the fish passage structure can operate)
+#' 2. `fps_bottom_elev`: a single numeric value, the minimum pool elevation (in
+#'   feet) at which the fish passage structure can operate
+#' 3. `dpe_x_position`: a single numeric value referencing which column of the 
+#'   DPE lookup table (provided in `resv_data`). Used to determine how many
+#' which column of `route_dpe` AFTER the baseline should be selected?
 #' @return A vector of DPE with one entry for each pool elevation provided.
 #' 
 #' @import dplyr
