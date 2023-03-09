@@ -194,8 +194,8 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
         B.turb = pmax(0, turb_flow - (qFPS * (1 - fishPctRO))),
         B.RO = pmax(0, RO_flow - (qFPS * fishPctRO)),
         B.FPS = qFPS
-      ) %>% select(-fishPctRO)
-    The FSO collects flow needed for qFPS first from the spill, then the RO, then the PH
+      ) %>% select(-fishPctRO),
+    # The FSO collects flow needed for qFPS first from the spill, then the RO, then the PH
     "FSO" = fish_to_passFPS %>% # 
       ### NOTE: These are coded "out of order", but the spill - RO - PH order is preserved
       mutate(
