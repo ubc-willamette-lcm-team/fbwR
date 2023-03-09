@@ -3,14 +3,7 @@
 #' @aliases distributeFish_daily
 #' @param ressim_data A dataframe that includes at least Date (in datetime
 #' format) and Outflow (cfs)
-#' @param resv_data Named list of objects that include reservoir-specific data.
-#' See the load_* functions for more details on what
-#           parameters are expected. Here, only approaching data are needed.
-#' @param quickset_data
-#' @param method Distribution method; one of "flat" or "flow". In each month,
-#' are the fish per day distributed uniformly ("flat", such that the same
-#' proportion of the population approaches each day that month) or proportional
-#' to flow ("flow")
+#' @param param_list
 #' @return Dataframe matching ressim_data but with new columns appended:
 #' "fry_DailyDistribution", "sub_DailyDistribution", "year_DailyDistribution"
 #' containing the calculated proportion of fry, sub-yearlings, and yearlngs
@@ -42,14 +35,14 @@ distributeFishDaily <- function(ressim_data, param_list) {
       Month = lubridate::month(param_list$monthly_runtiming$Date, 
         label = TRUE, abbr = TRUE),
       # Use the "alternative" approaching run timing
-      approaching_month = param_list$monthly_runtiming$approaching_alternative)
+      approaching_monthly = param_list$monthly_runtiming$approaching_alternative)
   } else {
     fish_approaching <- data.frame(
       # Convert the date column into month only (instead of dyt format)
       Month = lubridate::month(param_list$monthly_runtiming$Date, 
         label = TRUE, abbr = TRUE),
       # Use the "baseline" approaching run timing
-      approaching_month = param_list$monthly_runtiming$approaching_baseline)
+      approaching_monthly = param_list$monthly_runtiming$approaching_baseline)
   }
   # Join the run timing dataframe and above DF by the "Month" column
   ressim_data_runTiming <- left_join(ressim_data_tmp,
@@ -71,6 +64,6 @@ distributeFishDaily <- function(ressim_data, param_list) {
         prop_month = outflow_flow / MonthlyQ_total)
   }
   outDF %>%
-    mutate(approaching_dailyDistribution = approaching_month * prop_month) %>%
+    mutate(approaching_daily = approaching_monthly * prop_month) %>%
     select(-c(DiM, YrMo, prop_month, MonthlyQ_mean, MonthlyQ_total))
 }
