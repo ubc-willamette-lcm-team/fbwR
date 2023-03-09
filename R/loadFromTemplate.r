@@ -7,9 +7,6 @@
 
 #' @export
 
-template_file <- here("17_01_2023_TemplateLoader", 
-  "template_data_entry_06012023.xlsx")
-
 loadFromTemplate <- function(template_file) {
   sheetnames <- readxl::excel_sheets(path = template_file)
   stopifnot({
@@ -18,59 +15,68 @@ loadFromTemplate <- function(template_file) {
         "alt_description", "route_specifications",
         "route_effectiveness", "route_dpe",
         "monthly_runtiming", "ro_surv", "ro_elevs",
-        "turb_surv", "spill_surv", "temp_dist", "water_year_types") %in% sheetnames)
+        "turb_surv", "spill_surv", "temp_dist", "water_year_types") %in% 
+        sheetnames)
   })
-  outlist <- list()
+  # Includes information about the alternative being modelled
   alt_desc <- readxl::read_excel(path = template_file,
     sheet = "alt_description", skip = 5,
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text") %>%
     # Remove the definition of the parameter
-    select(-definition, `R class`)
+    select(-c(definition, `R class`))
+  alt_desc_list <- list(alt_desc$value)[[1]]
+  names(alt_desc_list) <- alt_desc$parameter_name
+  # Information about the routes in the dam
   route_specs <- readxl::read_excel(path = template_file,
     sheet = "route_specifications", skip = 5,
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text") %>%
     # Remove the definition of the parameter
     select(-definition)
+  # Route effectiveness data
   route_eff <- readxl::read_excel(path = template_file,
     sheet = "route_effectiveness", skip = 5,
-    na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
+    na = character(), trim_ws = F, col_names = TRUE, col_types = "numeric")
+  # Dam passage efficiency data
   route_dpe <- readxl::read_excel(path = template_file,
     sheet = "route_dpe", skip = 5,
-    na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
+    na = character(), trim_ws = F, col_names = TRUE, col_types = c(
+      "numeric", "text", "numeric", "numeric", "numeric", "numeric"))
   monthly_runtiming <- readxl::read_excel(path = template_file,
     sheet = "monthly_runtiming", skip = 5,
-    na = character(), trim_ws = F, col_names = TRUE, col_types = "text") %>%
-    janitor::clean_names()
+    na = character(), trim_ws = F, col_names = TRUE, col_types = c("date", 
+      "numeric", "numeric"))
   ro_surv <- readxl::read_excel(path = template_file,
     sheet = "ro_surv", skip = 5,
-    na = character(), trim_ws = F, col_names = TRUE, col_types = "text") %>%
-    janitor::row_to_names(5)
+    na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
   ro_elevs <- readxl::read_excel(path = template_file,
     sheet = "ro_elevs", skip = 5,
-    na = character(), trim_ws = F, col_names = TRUE, col_types = "text") %>%
-    janitor::row_to_names(5)
-   turb_surv <- readxl::read_excel(path = template_file,
+    na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
+  turb_surv <- readxl::read_excel(path = template_file,
     sheet = "turb_surv", skip = 5,
-    na = character(), trim_ws = F, col_names = TRUE, col_types = "text") %>%
-    janitor::row_to_names(5)
+    na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
   spill_surv <- readxl::read_excel(path = template_file,
     sheet = "spill_surv", skip = 5,
-    na = character(), trim_ws = F, col_names = TRUE, col_types = "text") %>%
-    janitor::row_to_names(5)
+    na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
   ## Still have to read in the temperature distribution data
   # Just include in the Excel file like FBW Excel heh
   temp_dist <- readxl::read_excel(path = template_file,
     sheet = "temp_dist", skip = 5,
     na = character(), trim_ws = F, col_names = TRUE, 
-    col_types = c("date", "numeric", "numeric", "numeric")) %>%
-    janitor::row_to_names(5)
+    col_types = c("date", "numeric", "numeric", "numeric", "numeric"))
   water_year_types <- data.frame(readxl::read_excel(path = template_file,
-    sheet = "water_year_types",
-    na = character(), trim_ws = F, col_names = TRUE, col_types = "text")) %>%
-    dplyr::mutate(
-      split_abundant = split_CW,
-      split_adequate = split_N,
-      split_deficit = split_HD,
-      split_insufficient = mean(split_N, split_HD)
-    )
+    sheet = "water_year_types", skip = 5,
+    na = character(), trim_ws = F, col_names = TRUE, col_types = "text"))
+  return(list(
+    "alt_desc" = alt_desc_list,
+    "route_specs" = route_specs,
+    "route_eff" = route_eff,
+    "route_dpe" = route_dpe,
+    "monthly_runtiming" = monthly_runtiming,
+    "ro_surv" = ro_surv,
+    "ro_elevs" = ro_elevs,
+    "turb_surv" = turb_surv,
+    "spill_surv" = spill_surv,
+    "temp_dist" = temp_dist,
+    "water_year_types" = water_year_types
+  ))
 }

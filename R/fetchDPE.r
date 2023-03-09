@@ -21,11 +21,20 @@
 #' @importFrom stats, approxfun
 #' @export
 
-fetchDPE <- function(ressim_data, resv_data, quickset_data){
+fetchDPE <- function(ressim_data, param_list){
     # First, check to see what kind of DPE data we need (only baseline, FSS, etc.)
-    fps_type <- quickset_data$collector
-    # First, create the baseline interpolator
-    baseline_linear_interpolator <- approxfun(x=resv_data$route_dpe$elev, 
+    fps_type <- param_list$alt_desc[["collector"]]
+
+    ### ~~~ To make uncertain: find a linear function that this is derived
+    ###     from real-world data. There is presumably some function that 
+    ###     underlies this: 
+    ###       DPE ~ elev + NOISE
+    ###     so if we generate the NOISE randomly we can add random deviates 
+    ###     (centred on 0)
+    ### 
+    # First, create the baseline interpolator: this is like calling a function
+    #   which can be called later. Providing new X values generates new Y values 
+    baseline_linear_interpolator <- approxfun(x = param_list$route_dpe$elev, 
         y=resv_data$route_dpe$baseline_dpe, rule=2)
     # now, fill in other details based on quickset_data
     if (fps_type == "noCollector") {
