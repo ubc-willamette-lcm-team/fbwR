@@ -22,10 +22,10 @@ calcTempSplit <- function(ressim_data, water_year_types, temp_dist_df){
     )
     # Iterate over years
     for(i in 1:length(water_year_types$year)){
-        yr <- water_year_types$year[i]
+        yr <- as.numeric(water_year_types$year[i])
         # Identify year type and corresponding column in temp_dist_df
         type <- water_year_types$type[i]
-        typeCol <- which(colnames(temp_dist_df)==type)
+        typeCol <- which(colnames(temp_dist_df) == type)
         # Find the lower bound for the temperature split data
         lower_date <- temp_dist_df$Date[1]
         # Coerce the year to be current (cannot be year-agnostic)
@@ -44,7 +44,9 @@ calcTempSplit <- function(ressim_data, water_year_types, temp_dist_df){
         # New interval
         date_interval <- lubridate::interval(lower_date, origin_date)
         # Here, 'r' is saved from the iterator above and can be used at its highest value
-        tempSplitOut$split[which(tempSplitOut$Date %within% date_interval)] <- temp_dist_df[r,typeCol]
+        tempSplitOut$split[
+            which(tempSplitOut$Date %within% date_interval)] <- 
+            temp_dist_df[r, typeCol]
     }
     tempSplitOut
 }
