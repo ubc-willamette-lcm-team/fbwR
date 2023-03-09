@@ -15,7 +15,7 @@
 #' `param_list$water_year_types`, `param_list$temp_dist`, `param_list$alt_desc`, ``).
 #' @param verbose_output (Optional) Logical argument indicating whether 
 #' intermediate columns (proportion of spill in each outlet: `pB.spill`, 
-#' `pB.turb`, `pB.RO`, and `p.FPS`; fish-bearing flow through each 
+#' `pB.turb`, `pB.RO`, and `pB.FPS`; fish-bearing flow through each 
 #' outlet: `B.spill`, `B.turb`, `B.RO`, and `B.FPS`; and route
 #' effectiveness for each outlet: `RE.spill`, `RE.turb`, `RE.RO`, and
 #' `RE.FPS`). Defaults to FALSE, in which case only the proportion of fish 
@@ -24,7 +24,7 @@
 #' @return A dataframe with all of the columns of the input table, 
 #' `fish_postDPE`, with the addition of some number of columns (depending on the
 #' `verbose_output` argument). At least the flow rate through the fish passage
-#' structure, `qFPS`, and the proportion of fish passing through each 
+#' structure, `FPS_flow`, and the proportion of fish passing through each 
 #' outlet in the dam is returned. Optionally, if `verbose_output = TRUE`, 
 #' intermediate variables like the proportion of flow through each outlet, route
 #' effectiveness, and fish-bearing flow are output.
@@ -36,7 +36,7 @@
 distributeFish_outlets <- function(fish_postDPE, param_list, 
   verbose_output = FALSE) {
   fps <- as.character(param_list$alt_desc[["collector"]]) # what kind of FPS?
-  if (fps != "NONE") { # calculate qFPS
+  if (fps != "NONE") { # calculate FPS_flow
     # Set min and max elevation for FPS
     if (is.na(param_list$alt_desc[["fps_max_elev"]])){ # if no max:
       param_list$alt_desc[["fps_max_elev"]] <- Inf
@@ -78,14 +78,14 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
         # To calculate the flow through the FPS:
         # First, 0 if elevation is inadequate (i.e., adequate_elev==0)
         # Take the minimum of qmax and FLOW-OUT for that day * (1-TEMP-SPLIT)
-          mutate(qFPS = adequate_elev * pmin(param_list$alt_desc[["fps_q_max"]], 
+          mutate(FPS_flow = adequate_elev * pmin(param_list$alt_desc[["fps_q_max"]], 
             (outflow_flow * (1 - temp_split)))) %>%
           # "forget" the elevation column, no longer needed
           select(-adequate_elev)
       } else {
         # otherwise: minimum of max flow and PH+RO flows (if elevation is adequate)
         fish_to_passFPS <- fish_to_passFPS %>%
-          mutate(qFPS = adequate_elev * 
+          mutate(FPS_flow = adequate_elev * 
             # Multiply the binary adequate_elev by the combined turb + RO flow
             pmin(param_list$alt_desc[["fps_q_max"]], (turb_flow + RO_flow))) %>%
           select(-adequate_elev)
@@ -94,7 +94,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
       fish_to_passFPS <- fish_to_passFPS %>% 
         mutate(
           # Maximum flow so long as elevation is enough
-          qFPS = param_list$alt_desc[["fps_q_max"]] * adequate_elev) %>%
+          FPS_flow = param_list$alt_desc[["fps_q_max"]] * adequate_elev) %>%
         select(-adequate_elev)
     } else if(fps == "FISH WEIR") {
       # First check that the weir date is appropriate - issue warning if dates missing
@@ -107,7 +107,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
             #   In this case, because no dates given, assume active
             binaryWeir = 1,
             # Perform a parallel minimum
-            qFPS = pmin(param_list$alt_desc[["fps_q_max"]], spill) * 
+            FPS_flow = pmin(param_list$alt_desc[["fps_q_max"]], spill) * 
               binaryWeir * adequate_elev
           ) %>% 
           select(-c(adequate_elev, binaryWeir))
@@ -139,7 +139,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
             binaryWeir = ifelse(MoDay %in% daily_weir_md, 1, 0),
             # Take the minimum of qMax or spillway flow, 
             # multiplied by weir date (0/1) and adequate elevation (0/1)
-            qFPS = pmin(param_list$alt_desc[["fps_q_max"]], spill)*binaryWeir*adequate_elev
+            FPS_flow = pmin(param_list$alt_desc[["fps_q_max"]], spill)*binaryWeir*adequate_elev
           ) %>% 
           # Get rid of "extra" columns
           select(-c(adequate_elev, binaryWeir))
@@ -147,14 +147,14 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
     } else if(fps == "FSO") {
       fish_to_passFPS <- fish_to_passFPS %>% 
         mutate(
-          qFPS = pmin(param_list$alt_desc[["fps_q_max"]], outflow_flow) * adequate_elev)
+          FPS_flow = pmin(param_list$alt_desc[["fps_q_max"]], outflow_flow) * adequate_elev)
         select(-adequate_elev)
     } else {
       stop('FPS must be one of: "NONE", "FSC", "FSS", "FSO", or "FISH WEIR"')
     }
   } else { # Finally, if it is "NONE", 0 flow
     fish_to_passFPS <- fish_postDPE %>%
-      mutate(qFPS = 0) 
+      mutate(FPS_flow = 0) 
   }
   # Perform calculations based on which FPS was indicated in the function call,
   # Save outputs into intermediate dataframe fishBearingFlow with new columns 
@@ -170,18 +170,18 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
         B.RO = RO_flow,
         B.FPS = 0
       ),
-    "FSC" = fish_to_passFPS %>% # If FSC, simply sum together B.total above and qFPS
+    "FSC" = fish_to_passFPS %>% # If FSC, simply sum together B.total above and FPS_flow
     #   Here, if there is an FSC, the total attraction water is more than the
     #   outflow. It's dam + recirculating FSC water
       mutate(
         # This will preserve the total flow, which needs to be maintained
         #   in later fish survival calculations
         # These new steps from FBW Basic commands
-        multiplier = (Q.Tot / (Q.Tot + qFPS)),
+        multiplier = (Q.Tot / (Q.Tot + FPS_flow)),
         B.spill = spill_flow * multiplier,
         B.turb = turb_flow * multiplier,
         B.RO = RO_flow * multiplier,
-        B.FPS = qFPS * multiplier
+        B.FPS = FPS_flow * multiplier
         # B.Total=B.turb+B.RO+B.spill+B.FPS
       ),
     "FSS" = fish_to_passFPS %>% 
@@ -191,20 +191,20 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
       mutate(
         fishPctRO = RO_flow / (turb_flow + RO_flow),
         B.spill = spill_flow,
-        B.turb = pmax(0, turb_flow - (qFPS * (1 - fishPctRO))),
-        B.RO = pmax(0, RO_flow - (qFPS * fishPctRO)),
-        B.FPS = qFPS
+        B.turb = pmax(0, turb_flow - (FPS_flow * (1 - fishPctRO))),
+        B.RO = pmax(0, RO_flow - (FPS_flow * fishPctRO)),
+        B.FPS = FPS_flow
       ) %>% select(-fishPctRO),
-    # The FSO collects flow needed for qFPS first from the spill, then the RO, then the PH
+    # The FSO collects flow needed for FPS_flow first from the spill, then the RO, then the PH
     "FSO" = fish_to_passFPS %>% # 
       ### NOTE: These are coded "out of order", but the spill - RO - PH order is preserved
       mutate(
-        B.spill = pmax(spill_flow - qFPS, 0), # First take from the spillway...
+        B.spill = pmax(spill_flow - FPS_flow, 0), # First take from the spillway...
         B.turb = pmax(turb_flow + 
-          pmin(RO_flow + pmin(spill_flow - qFPS, 0), 0), 0), # any remaining flow from RO_flow and spill, otherwise the original value
+          pmin(RO_flow + pmin(spill_flow - FPS_flow, 0), 0), 0), # any remaining flow from RO_flow and spill, otherwise the original value
         B.RO=pmax(RO_flow + 
-          pmin(spill_flow - qFPS, 0), 0), # any remaining flow from spill, otherwise the original value
-        B.FPS = qFPS
+          pmin(spill_flow - FPS_flow, 0), 0), # any remaining flow from spill, otherwise the original value
+        B.FPS = FPS_flow
       ) %>%
       # Remove flow from spill, RO, and powerhouse/turbine
       mutate(
@@ -215,17 +215,17 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
     # If FISH WEIR, the FPS collects from the spillway, otherwise flows are the same
     "FISH WEIR" = fish_to_passFPS %>% 
       mutate(
-        B.spill = spill_flow - qFPS,
+        B.spill = spill_flow - FPS_flow,
         B.turb = turb_flow,
         B.RO = RO_flow, 
-        B.FPS = qFPS
+        B.FPS = FPS_flow
       ) %>% 
       # Take away flow from the spillway with a FISH WEIR
       mutate(spill_flow = B.spill)
   )
   # A final check, return a warning if FPS flow is higher than spillway flow. 
   if (fps == "FISH WEIR" & length(which(fishBearingFlow$B.spill < 0)) > 0) {
-    warning("Some B.spill values are <0 (this can happen when you specify a 'FISH WEIR' FPS and the spill flow is less than qFPS.")
+    warning("Some B.spill values are <0 (this can happen when you specify a 'FISH WEIR' FPS and the spill flow is less than FPS_flow.")
   }
   percentDist <- fishBearingFlow %>% 
   # First, calculate proportional flow
@@ -275,7 +275,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
       RE.turb = PH_RElookup(pB.turb),
       RE.RO = RO_RElookup(pB.RO),
       RE.FPS = fps_RElookup(pB.FPS),
-      adj.Total = ((RE.spill*pB.spill)+(RE.FPS*p.FPS)+(RE.RO*pB.RO)+(RE.turb*pB.turb))
+      adj.Total = ((RE.spill*pB.spill)+(RE.FPS*pB.FPS)+(RE.RO*pB.RO)+(RE.turb*pB.turb))
     )
   # Now, adjust for proportion of fish through each outlet
   #   PercentToPass calculations
@@ -287,7 +287,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
       F.turb_flow = (approaching_daily_postDPE * RE.turb * pB.turb)/
         adj.Total,
       F.RO = (approaching_daily_postDPE * RE.RO * pB.RO)/adj.Total,
-      F.FPS = (approaching_daily_postDPE * RE.FPS * p.FPS) / adj.Total
+      F.FPS = (approaching_daily_postDPE * RE.FPS * pB.FPS) / adj.Total
     ) %>%
     # Remove intermediate
     select(-c(adj.Total))
