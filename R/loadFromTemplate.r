@@ -27,11 +27,14 @@ loadFromTemplate <- function(template_file) {
   alt_desc_list <- list(alt_desc$value)[[1]]
   names(alt_desc_list) <- alt_desc$parameter_name
   # Information about the routes in the dam
-  route_specs <- readxl::read_excel(path = template_file,
+  route_specs <- data.frame(t(readxl::read_excel(path = template_file,
     sheet = "route_specifications", skip = 5,
+    # Read in as text, change later
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text") %>%
     # Remove the definition of the parameter
-    select(-definition)
+    select(-definition)) %>%
+    janitor::row_to_names(., row_number = 1))
+  suppressWarnings(route_specs[,1:5] <- apply(route_specs[,1:5], 2, as.numeric))
   # Route effectiveness data
   route_eff <- readxl::read_excel(path = template_file,
     sheet = "route_effectiveness", skip = 5,
