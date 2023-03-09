@@ -17,7 +17,7 @@
 calcTempSplit <- function(ressim_data, water_year_types, temp_dist_df){
     # Create an output data frame
     tempSplitOut <- data.frame(
-        Date = as.Date(ressim_data$Date, "%Y-%m-%d"),
+        Date = as.Date(x = ressim_data$Date, format = "%Y-%m-%d"),
         split = NaN
     )
     # Iterate over years
