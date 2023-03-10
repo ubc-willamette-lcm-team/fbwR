@@ -282,9 +282,9 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
   fishDist <- RETable %>% 
     # Then, adjust for proportion of fish through each outlet
     mutate(
-      F.spill_flow = (approaching_daily_postDPE * RE.spill * pB.spill)/ 
+      F.spill = (approaching_daily_postDPE * RE.spill * pB.spill)/ 
         adj.Total,
-      F.turb_flow = (approaching_daily_postDPE * RE.turb * pB.turb)/
+      F.turb = (approaching_daily_postDPE * RE.turb * pB.turb)/
         adj.Total,
       F.RO = (approaching_daily_postDPE * RE.RO * pB.RO)/adj.Total,
       F.FPS = (approaching_daily_postDPE * RE.FPS * pB.FPS) / adj.Total
@@ -295,21 +295,21 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
   if(tolower(param_list$alt_desc[["nets"]]) == "y"){
     fishDist <- fishDist %>% 
       mutate(
-        F.turb_flow = 0,
+        F.turb = 0,
         F.RO = 0)
     if((resv_data$outlet_data$normally_used[which(resv_data$outlet_data$outlet == "Spill")])=="n"){
       # If the spillway is not normally used, fish are distributed
       #   through it first then the FPS
       fishDist <- fishDist %>% 
         mutate(
-          F.spill_flow = approaching_daily_postDPE * 
+          F.spill = approaching_daily_postDPE * 
             (RE.spill * pB.spill) / adj.Total,
-          F.FPS = approaching_daily_postDPE - F.spill_flow
+          F.FPS = approaching_daily_postDPE - F.spill
         )
     } else {
       fishDist <- fishDist %>%
         mutate(
-          F.spill_flow = 0,
+          F.spill = 0,
           F.FPS = approaching_daily_postDPE
         )
     }
