@@ -31,10 +31,17 @@ fetchDPE <- function(ressim_data, param_list){
   ###   so if we generate the NOISE randomly we can add random deviates 
   ###   (centred on 0)
   ### 
+
   # First, create the baseline interpolator: this is like calling a function
   #   which can be called later. Providing new X values generates new Y values 
-  baseline_linear_interpolator <- approxfun(x = param_list$route_dpe$elev, 
-    y=param_list$route_dpe$baseline_dpe, rule=2)
+  
+  dpe_baseline 
+
+  baseline_linear_interpolator <- approxfun(
+    x = param_list$route_dpe$elev, 
+    y = param_list$route_dpe$baseline_dpe, 
+    rule = 2)
+
   # now, fill in other details based on param_list
   if (fps_type == "NONE") {
     elevmin_FPS <- Inf # By making the minimum elevation infinite, only the 
@@ -60,11 +67,13 @@ fetchDPE <- function(ressim_data, param_list){
     )
   baseline_dpe <- baseline_linear_interpolator(ressim_data$elev)
   fps_dpe <- selected_dpe_interpolator(ressim_data$elev)
+
   ressim_data <- ressim_data %>%
     mutate(
       dam_passage_efficiency = case_when(
         # If within elevation boundaries, apply DPE
-        elev >= elevmin_FPS & elev <= elevmax_FPS ~ fps_dpe,
+        elev >= elevmin_FPS & 
+        elev <= elevmax_FPS ~ fps_dpe,
         # Otherwise use baseline
         ### elev < elevmin_FPS & elev > elevmax_FPS ~ baseline_dpe,
         TRUE ~ baseline_dpe

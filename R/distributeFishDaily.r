@@ -15,28 +15,35 @@
 
 distributeFishDaily <- function(ressim_data, param_list) {
   ressim_data_tmp <- ressim_data %>%
-  # First, calculate days in month as DiM column
-    mutate(DiM = lubridate::days_in_month(Date),
+
+  # First, calculate days in month as days_in_month column
+    mutate(days_in_month = lubridate::days_in_month(Date),
       # Extract month from flow data
       YrMo = paste0(lubridate::year(Date), "-", lubridate::month(Date)),
       Month = lubridate::month(Date, label = TRUE, abbr = TRUE)
     ) %>%
     # Then calculate year-month statistics (mean and total outflow)
     group_by(YrMo) %>%
+    # Q refers to flow rate through the dam
     mutate(
       MonthlyQ_mean = mean(outflow_flow),
       MonthlyQ_total = sum(outflow_flow)
     ) %>%
     ungroup()
+  
+
   # Assess which timing should be used - baseline or FPS-modified?
   if (param_list$alt_desc[["fps_alternative"]] == "Y") {
+
     fish_approaching <- data.frame(
       # Convert the date column into month only (instead of dyt format)
       Month = lubridate::month(param_list$monthly_runtiming$Date, 
         label = TRUE, abbr = TRUE),
       # Use the "alternative" approaching run timing
       approaching_monthly = param_list$monthly_runtiming$approaching_alternative)
+
   } else {
+
     fish_approaching <- data.frame(
       # Convert the date column into month only (instead of dyt format)
       Month = lubridate::month(param_list$monthly_runtiming$Date, 
@@ -47,23 +54,25 @@ distributeFishDaily <- function(ressim_data, param_list) {
   # Join the run timing dataframe and above DF by the "Month" column
   ressim_data_runTiming <- left_join(ressim_data_tmp,
     fish_approaching, by = "Month")
+
   # Determine how the distribution will be done: flat or with flow
   dist_type <- ifelse(param_list$alt_desc[["fish_with_flow"]] == "Y", "flow", 
     "flat")
   if (dist_type == "flat") {
     # If flat, equal proportion across days in each month
     outDF <- ressim_data_runTiming %>%
-      # Add new columns, prop_monthlyflow and approaching_daily
+      # Add new columns, prop_within_monthlyflow and approaching_daily
       mutate(
-        prop_month = 1 / DiM)
+        prop_within_month = 1 / days_in_month)
   } else if (dist_type == "flow") {
     # If flow, calculate proportional to each day's proportion of monthly total
     # This is the method on page 22, not page 16 of FWB App K
     outDF <- ressim_data_runTiming %>%
       mutate(
-        prop_month = outflow_flow / MonthlyQ_total)
+        prop_within_month = outflow_flow / MonthlyQ_total)
   }
+  
   outDF %>%
-    mutate(approaching_daily = approaching_monthly * prop_month) %>%
-    select(-c(DiM, YrMo, prop_month, MonthlyQ_mean, MonthlyQ_total))
+    mutate(approaching_daily = approaching_monthly * prop_within_month) %>%
+    select(-c(days_in_month, YrMo, prop_within_month, MonthlyQ_mean, MonthlyQ_total))
 }

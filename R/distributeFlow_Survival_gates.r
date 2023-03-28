@@ -332,7 +332,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets, param_list) 
             fish_distributed_outlets <- fish_distributed_outlets %>% 
                 mutate("{structure}_survival" := survLinearInterp(fish_distributed_outlets$gateflow))
           }
-      } else if(resv_data_sub$gate_method=="Peaking Performance"){
+      } else if (resv_data_sub$gate_method=="Peaking Performance") {
         min_flow <- resv_data_sub$min_flow
         max_flow <- resv_data_sub$max_flow
         ngates <- resv_data_sub$n_gates

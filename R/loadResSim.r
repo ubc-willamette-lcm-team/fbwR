@@ -26,20 +26,27 @@
 #' 
 #' @export
 
+infile <- here("17_01_2023_TemplateLoader", "CGR_ResSim_NAA.xlsm")
+
 loadResSim <- function(infile, wide = TRUE) {
+    
     sheetnames <- readxl::excel_sheets(path = infile)
+    
     elev <- data.frame(readxl::read_excel(na=character(), trim_ws = F,  infile,
         sheet = sheetnames[grep(pattern = "-elev$", x = tolower(sheetnames))],
         col_names = TRUE, range = "A7:BW372"))
     colnames(elev)[1] <- "Date"
+    
     outflow <- data.frame(readxl::read_excel(na=character(), trim_ws = F,  infile,
         sheet = sheetnames[grep(pattern = "-out$", x = tolower(sheetnames))],
         col_names = TRUE, range = "A7:BW372"))
     colnames(outflow)[1] <- "Date"
+    
     turbine <- data.frame(readxl::read_excel(na=character(), trim_ws = F,  infile,
         sheet = sheetnames[grep(pattern = "-ph$", x = tolower(sheetnames))],
         col_names = TRUE, range = "A7:BW372"))
     colnames(turbine)[1] <- "Date"
+    
     RO <- data.frame(readxl::read_excel(na=character(), trim_ws = F,  infile,
         sheet = sheetnames[grep(pattern = "-ro$", x = tolower(sheetnames))],
         col_names = TRUE, range = "A7:BW372"))
@@ -51,6 +58,7 @@ loadResSim <- function(infile, wide = TRUE) {
     # Set up this list for quick formatting/comprehension later
     ressim_list <- list(elev, outflow, turbine, RO, spill)
     names(ressim_list) <- c("elev", "outflow", "turb", "RO", "spill")
+
     # All of these are in wide format
     # Convert all from wide (columns = years) to long (column=flow rates, 
     #   rows=Dates with specified years)
@@ -63,9 +71,13 @@ loadResSim <- function(infile, wide = TRUE) {
             }
             df_tmp <- ressim_list[[l]]
             df_out <- data.frame(
-                tidyr::pivot_longer(df_tmp, cols = starts_with("X"),
-                names_to = "year", values_to = current_colname,
-                names_prefix = "X", values_drop_na = FALSE))
+                tidyr::pivot_longer(df_tmp, 
+                cols = starts_with("X"),
+                names_to = "year", 
+                names_prefix = "X", 
+                values_to = current_colname,
+                values_drop_na = FALSE))
+
             lubridate::year(df_out$Date) <- as.numeric(df_out$year)
             ressim_list[[l]] <- df_out %>%
                 select(-"year")

@@ -35,7 +35,9 @@
 
 distributeFish_outlets <- function(fish_postDPE, param_list, 
   verbose_output = FALSE) {
+  
   fps <- as.character(param_list$alt_desc[["collector"]]) # what kind of FPS?
+  
   if (fps != "NONE") { # calculate FPS_flow
     # Set min and max elevation for FPS
     if (is.na(param_list$alt_desc[["fps_max_elev"]])){ # if no max:

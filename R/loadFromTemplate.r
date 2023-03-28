@@ -6,9 +6,13 @@
 #' @import lubridate
 
 #' @export
-
+#' 
+#' 
+library(here)
 loadFromTemplate <- function(template_file) {
   sheetnames <- readxl::excel_sheets(path = template_file)
+  
+  # Check if all of the sheets are there
   stopifnot({
       # Check for sheet names
       all(c(
@@ -18,23 +22,26 @@ loadFromTemplate <- function(template_file) {
         "turb_surv", "spill_surv", "temp_dist", "water_year_types") %in% 
         sheetnames)
   })
+
   # Includes information about the alternative being modelled
   alt_desc <- readxl::read_excel(path = template_file,
     sheet = "alt_description", skip = 5,
-    na = character(), trim_ws = F, col_names = TRUE, col_types = "text") %>%
+    na = character(), trim_ws = FALSE, col_names = TRUE, col_types = "text") %>%
     # Remove the definition of the parameter
     select(-c(definition, `R class`))
   alt_desc_list <- list(alt_desc$value)[[1]]
   names(alt_desc_list) <- alt_desc$parameter_name
+
   # Information about the routes in the dam
   route_specs <- data.frame(t(readxl::read_excel(path = template_file,
     sheet = "route_specifications", skip = 5,
     # Read in as text, change later
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text") %>%
     # Remove the definition of the parameter
-    select(-definition)) %>%
+    dplyr::select(-definition)) %>%
     janitor::row_to_names(., row_number = 1))
   suppressWarnings(route_specs[,1:5] <- apply(route_specs[,1:5], 2, as.numeric))
+
   # Route effectiveness data
   route_eff <- readxl::read_excel(path = template_file,
     sheet = "route_effectiveness", skip = 5,
@@ -69,6 +76,7 @@ loadFromTemplate <- function(template_file) {
   water_year_types <- data.frame(readxl::read_excel(path = template_file,
     sheet = "water_year_types", skip = 5,
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text"))
+  
   return(list(
     "alt_desc" = alt_desc_list,
     "route_specs" = route_specs,
