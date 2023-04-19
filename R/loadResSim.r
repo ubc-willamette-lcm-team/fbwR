@@ -21,6 +21,7 @@
 #' day in the 365-day year, Feb 29 in leap years are ignored)? Defaults to TRUE,
 #' following standard input format of Res-Sim spreadsheets.
 #' @import dplyr
+#' @import tidyr
 #' @import readxl
 #' @import lubridate
 #' 
@@ -60,9 +61,10 @@ loadResSim <- function(infile, wide = TRUE) {
     names(ressim_list) <- c("elev", "outflow", "turb", "RO", "spill")
 
     # All of these are in wide format
-    # Convert all from wide (columns = years) to long (column=flow rates, 
+    # Convert all from wide (columns = years) to long (column=flow rates,
     #   rows=Dates with specified years)
     if (wide) {
+        # Iterate across the items in ressim_list and pivot to long format
         for (l in seq_along(ressim_list)) {
             if (names(ressim_list)[l] == "elev") {
                 current_colname <- "elev"
@@ -71,13 +73,12 @@ loadResSim <- function(infile, wide = TRUE) {
             }
             df_tmp <- ressim_list[[l]]
             df_out <- data.frame(
-                tidyr::pivot_longer(df_tmp, 
+                tidyr::pivot_longer(df_tmp,
                 cols = starts_with("X"),
-                names_to = "year", 
-                names_prefix = "X", 
+                names_to = "year",
+                names_prefix = "X",
                 values_to = current_colname,
                 values_drop_na = FALSE))
-
             lubridate::year(df_out$Date) <- as.numeric(df_out$year)
             ressim_list[[l]] <- df_out %>%
                 select(-"year")

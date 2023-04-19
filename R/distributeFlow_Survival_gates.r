@@ -1,77 +1,84 @@
-#' Calculate distribution of flow through individual gates within each dam 
-#' outlet. This is useful in cases when a given dam outlet -- for example, 
+#' Calculate distribution of flow through individual gates within each dam
+#' outlet. This is useful in cases when a given dam outlet -- for example,
 #' turbines -- have multiple sub-outlets through which a fish can pass the dam.
 #' This function distributes flow between sub-outlets, and calculates survival
-#' through those individual gates as a function of flow (or as a fixed value, 
+#' through those individual gates as a function of flow (or as a fixed value,
 #' depending on parameterization).
-#' @param fish_distributed_outlets A list including at least the following named object: 
-#' route_dpe (a dataframe including columns `elev`, `baseline_dpe`, and any 
+#' @param fish_distributed_outlets A list including at least the following named
+#'  objects: 
+#' route_dpe (a dataframe including columns `elev`, `baseline_dpe`, and any
 #' number of other columns to the right of these that can be used to look up DPE
-#' at various pool elevations). 
-#' @param param_list A list containing named entries for at least the 
-#' following: 
+#' at various pool elevations).
+#' @param param_list A list containing named entries for at least the
+#' following:
 #' `route specifications`, with columns: `parameter`, `Spill`, `RO`, `Turb`, and
-#' `FPS`, and rows 
+#' `FPS`, and rows
 #' rows
-#' 1. `resv_data_sub$gate_methods`: a dataframe containing one column for each outlet type, 
-#'   with one row of data. Columns should include only: "ro_gatemethod", 
-#'   "turb_gatemethod", "spill_gatemethod", or "fp_gatemethod" (for the FPS).
-#'   There should be one row in the dataframe, containing a character string 
-#'   that defines the method of distributing flow between gates (one of 
-#'   "Equal Q", "Min Q to equal", "Unit to Max Q", "Target Q", or 
+#' 1. `resv_data_sub$gate_methods`: a dataframe containing one column for each
+#'   outlet type, with one row of data. Columns should include only:
+#'   "ro_gatemethod", "turb_gatemethod", "spill_gatemethod", or
+#'   "fp_gatemethod" (for the FPS).
+#'   There should be one row in the dataframe, containing a character string
+#'   that defines the method of distributing flow between gates (one of
+#'   "Equal Q", "Min Q to equal", "Unit to Max Q", "Target Q", or
 #'   "Peaking Performance").
 #' 2. `ro_surv`, `turb_surv`, `spill_surv`, and `fp_surv`: each of these named
-#'   objects should be a length-1 object that is either: 1) a fixed survival 
+#'   objects should be a length-1 object that is either: 1) a fixed survival
 #'   rate provided as a proportion surviving (e.g., 0.95 indicates 95% survival)
-#'   or 2) the word "table", indicating that survival should be calculated as a 
-#'   function of flow (see `fish_distributed_outlets` for details on the survival table, as 
-#'   the flow-survival relationship is invariant to which alternative is
-#'   being modelled,). If not provided, assumes survival rate is 0. 
-#' 3. `rereg`: "Y" or "N", is there re-regulating mortality associated with the 
-#'   dam? Fish that pass through the FPS do not experience re-regulation 
-#'   mortality unless they pass through an FSO (in which case, re-regulating 
-#'   mortality is applied). 
-#' 4. If `rereg` is equal to "Y": `rereg_mort`, a single numeric value of the 
-#'   mortality rate associated with reregulation (i.e., 1 - survival). 
+#'   or 2) the word "table", indicating that survival should be calculated as a
+#'   function of flow (see `fish_distributed_outlets` for details on the
+#'   survival table, as the flow-survival relationship is invariant to which
+#'   alternative is being modelled,). If not provided, assumes survival rate is
+#'   0.
+#' 3. `rereg`: "Y" or "N", is there re-regulating mortality associated with the
+#'   dam? Fish that pass through the FPS do not experience re-regulation
+#'   mortality unless they pass through an FSO (in which case, re-regulating
+#'   mortality is applied).
+#' 4. If `rereg` is equal to "Y": `rereg_mort`, a single numeric value of the
+#'   mortality rate associated with reregulation (i.e., 1 - survival).
 #' @param resv_data Data on number of gates, as well as minimum and maximum flow
-#' rates for each outlet type at the dam 
+#' rates for each outlet type at the dam
+#' @import dplyr
 
-distributeFlow_Survival_gates <- function(fish_distributed_outlets, param_list) {
+distributeFlow_Survival_gates <- function(fish_distributed_outlets, 
+  param_list) {
   resv_data <- param_list$route_specs
   # Loop through the outlet types to determine flow and survival through each
-  for(i in c("RO", "Turb", "Spill", "FPS")){
+  for (i in c("RO", "Turb", "Spill", "FPS")) {
     # keep track of current structure
     structure <- tolower(i)
     # Select only the relevant reservoir data
     resv_data_sub <- resv_data[which(tolower(
       rownames(resv_data)) == structure), ]
-    if(structure != "fps" && tolower(resv_data_sub$normally_used) == "n") {
-      cat(paste0("! Route ", i, " not normally used, setting survival rate = 0.\n"))
+    if (structure != "fps" && tolower(resv_data_sub$normally_used) == "n") {
+      cat(paste0("! Route ", i,
+        " not normally used, setting survival rate = 0.\n"))
       fish_distributed_outlets <- fish_distributed_outlets %>%
-        mutate("{structure}_survival" := 0)
+        dplyr::mutate("{structure}_survival" := 0)
       next # Move to the next iteration of i
     }
     # structure_surv indicates a point value or "table"
     structure_surv <- param_list$alt_desc[[paste0(structure, "_surv")]]
     cat(paste0("\n...calculating survival for ", i, ": ", structure_surv,"\n"))
     if (length(structure_surv) == 0) { # if this returns 0, skip
-      cat(paste0("! No survival rates provided for ", structure, ", assuming 0 and skipping."))
+      cat(paste0("! No survival rates provided for ", structure,
+        ", assuming 0 and skipping."))
       fish_distributed_outlets <- fish_distributed_outlets %>%
-        mutate("{structure}_survival" := 0)
+        dplyr::mutate("{structure}_survival" := 0)
       next
     }
     # If a point value, and numeric
-    if (structure_surv != "table" & !is.na(structure_surv)) {
+    if (structure_surv != "table" && !is.na(structure_surv)) {
       structure_surv <- as.numeric(structure_surv)
       # If reregulating and if we are not currently in the fish passage,
       #   apply rergulating mortality in addition to the point value mortality
       #   provided in the quickset_data
-      if (tolower(param_list$alt_desc[["rereg"]]) == "y" & i != "FPS") {
+      if (tolower(param_list$alt_desc[["rereg"]]) == "y" && i != "FPS") {
         survival <- structure_surv * (1 - as.numeric(
           param_list$alt_desc[["rereg_mortality"]]))
         # Otherwise, if in the fish passage structure:
-      } else if(tolower(param_list$alt_desc[["rereg"]]) == "y" & 
-        i == "FPS" & param_list$alt_desc[["collector"]] == "FSO"){
+      } else if(tolower(param_list$alt_desc[["rereg"]]) == "y" && 
+        i == "FPS" && param_list$alt_desc[["collector"]] == "FSO"){
         survival <- structure_surv * (1 - as.numeric(
           param_list$alt_desc[["rereg_mortality"]]))
       } else { # Otherwise (if FP that is not FSO) or non-rereg cases:
@@ -79,11 +86,11 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets, param_list) 
       }
       # Create a new column based on the current structures' survival rate
       fish_distributed_outlets <- fish_distributed_outlets %>%
-        mutate("{structure}_survival" := survival)
+        dplyr::mutate("{structure}_survival" := survival)
     } else { # here, use table-based approaches
       # Pull out the survival by flow table
       surv_table <- data.frame(param_list[[paste0(structure, "_surv")]]) %>%
-        mutate(across(everything(), as.numeric))
+        dplyr::mutate(across(everything(), as.numeric))
       # Check if there is a gate method provided, if not quit.
       if( is.na(resv_data_sub$gate_method)){
         stop("No gate method provided.")
@@ -199,49 +206,50 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets, param_list) 
           # weighted_survival <- weighted_survival+(newflow*(1/ifelse(flowData_tmp==0,Inf,flowData_tmp))*nearestSurv)
         }
         fish_distributed_outlets <- fish_distributed_outlets %>% 
-          mutate("{structure}_survival" := weighted_survival)
+          dplyr::mutate("{structure}_survival" := weighted_survival)
           # mutate(flow_weighted_survival = weighted_survival)
-      } else if(resv_data_sub$gate_method=="Min Q to equal") {
+      } else if(resv_data_sub$gate_method == "Min Q to equal") {
         weighted_survival <- 0
         min_flow <- resv_data_sub$min_flow
-        if(is.na(min_flow)){
+        if (is.na(min_flow)) {
           stop(paste0("No minimum flow provided for outlet ", structure))
         }
-        # min_flow <- -Inf
         # VBA revision here: treat the gates differently
         fish_distributed_outlets <- fish_distributed_outlets %>%
-          mutate(realized_gates = pmin(floor(
-            flowData_tmp / min_flow), gates, na.rm=T))
+          dplyr::mutate(realized_gates = pmin(floor(
+            flowData_tmp / min_flow), gates, na.rm = T))
         newflow <- flowData_tmp/fish_distributed_outlets$realized_gates
         if (multioutlet) {
-          mo_table[,1] <- elevXs
-          mo_table[,2] <- newflow
-          for(o in 1:nOutlet){
+          mo_table[, 1] <- elevXs
+          mo_table[, 2] <- newflow
+          for (o in 1:nOutlet) {
             # Here, look up the flow-based survival for both upper and lower
             # survYs <- c(survYs,survInterp_multi[[i]](newflow))
-            mo_table[,o+2] <- survInterp_multi[[o]](newflow)
+            mo_table[, o+2] <- survInterp_multi[[o]](newflow)
           }
           # Create a simple y=mx+b style lookup here
+          ### min(y2, y1+((y2-y1)*((x1-2100)/(x1-x2))))
           # y = survival rates (high and low)
           # x = elevation of the day
           # interpolate y~x
-          ### min(y2, y1+((y2-y1)*((x1-2100)/(x1-x2))))
-          nearestSurv <- pmin(pmax(mo_table[,3], mo_table[,4]), # if the extrapolated value is greater than
-          #  the maximum survival, just use max. survival 
-            mo_table[,3] +      # y1 equivalent
-            ((mo_table[,4] - mo_table[,3] )* # y2-y1 range
-            ((bottomElev[[1]]-mo_table[,1])/(bottomElev[[1]]-bottomElev[[2]])) # (x1 - new X)/(x1-x2)
+          nearestSurv <- pmin(pmax(mo_table[,3], mo_table[,4]),
+          # if the extrapolated value is greater than
+          #  the maximum survival, just use max. survival
+            mo_table[, 3] +      # y1 
+            ((mo_table[, 4] - mo_table[, 3]) * # y2-y1 range
+            ((bottomElev[[1]] - mo_table[, 1]) / (bottomElev[[1]] -
+              bottomElev[[2]]))
             )
           )
-          fish_distributed_outlets <- fish_distributed_outlets %>% 
-            mutate("{structure}_survival" := nearestSurv)
+          fish_distributed_outlets <- fish_distributed_outlets %>%
+            dplyr::mutate("{structure}_survival" := nearestSurv)
         } else {
           fish_distributed_outlets <- fish_distributed_outlets %>%
-          mutate(
+          dplyr::mutate(
             "{structure}_survival" := survLinearInterp(newflow)
           )
         }
-      } else if(resv_data_sub$gate_method=="Unit to Max Q") {
+      } else if(resv_data_sub$gate_method == "Unit to Max Q") {
         weighted_survival <- 0
         max_flow <- resv_data_sub$max_flow
         # Have to count down with flow
@@ -251,67 +259,68 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets, param_list) 
           varname_surv <- paste0(structure, "_surv_gate", g)
           # Here, set all flows > max to the maximum value
           ### This line is creating lists
-          # newflow <- ifelse(remaining_flow > max_flow, max_flow, remaining_flow)
           newflow <- pmin(data.frame(remaining_flow)[,1], max_flow)
           # Create a new column in the output df
-          fish_distributed_outlets <- mutate(fish_distributed_outlets, !!varname_flow := newflow)
-          if(multioutlet){
-            mo_table[,1] <- elevXs
-            mo_table[,2] <- newflow
-            for(o in 1:nOutlet){
+          fish_distributed_outlets <- dplyr::mutate(fish_distributed_outlets,
+            !!varname_flow := newflow)
+          if (multioutlet) {
+            mo_table[, 1] <- elevXs
+            mo_table[, 2] <- newflow
+            for (o in 1:nOutlet) {
               # Here, look up the flow-based survival for both upper and lower
               # survYs <- c(survYs,survInterp_multi[[i]](newflow))
-              mo_table[,o+2] <- survInterp_multi[[o]](newflow)
+              mo_table[, o + 2] <- survInterp_multi[[o]](newflow)
             }
-            nearestSurv <- pmin(pmax(mo_table[,3], mo_table[,4]), # if the extrapolated value is greater than
-            #  the maximum survival, just use max. survival 
-              mo_table[,3] +      # y1 equivalent
-              ((mo_table[,4] - mo_table[,3] )* # y2-y1 range
-              ((bottomElev[[1]]-mo_table[,1])/(bottomElev[[1]]-bottomElev[[2]])) # (x1 - new X)/(x1-x2)
-              )
-            )
+            nearestSurv <- pmin(pmax(mo_table[, 3], mo_table[, 4]),
+              mo_table[, 3] +      # y1 equivalent
+              ((mo_table[, 4] - mo_table[, 3] ) * # y2-y1 range
+              ((bottomElev[[1]] - mo_table[,1]) / (bottomElev[[1]] -
+                bottomElev[[2]])) # (x1 - new X)/(x1-x2)
+              ))
           } else {
             nearestSurv <- survLinearInterp(newflow)
           }
-          fish_distributed_outlets <- mutate(fish_distributed_outlets, !!varname_surv := nearestSurv)
+          fish_distributed_outlets <- dplyr::mutate(fish_distributed_outlets, 
+            !!varname_surv := nearestSurv)
           remaining_flow <- pmax((remaining_flow - max_flow), 0)
           weighted_survival <- ifelse(
             is.na(nearestSurv),
             weighted_survival,
-            weighted_survival+(newflow*(1/ifelse(flowData_tmp==0,Inf,flowData_tmp))*nearestSurv)
+            weighted_survival + (newflow * (1 / ifelse(
+              flowData_tmp == 0, Inf, flowData_tmp)) * nearestSurv)
           )
         }
-        fish_distributed_outlets <- fish_distributed_outlets %>% 
-          mutate("{structure}_survival" := weighted_survival)
-      } else if(resv_data_sub$gate_method=="Target Q") {
+        fish_distributed_outlets <- fish_distributed_outlets %>%
+          dplyr::mutate("{structure}_survival" := weighted_survival)
+      } else if (resv_data_sub$gate_method == "Target Q") {
         # If outlet flow is greater than target*gates:
         target_flow <- resv_data_sub$target_flow
         ngates <- resv_data_sub$n_gates
         fish_distributed_outlets <- fish_distributed_outlets %>%
-          mutate(
-            # This matches 
+          dplyr::mutate(
             flowData = flowData_tmp,
-            realized_gates = case_when(
-              # If flow data is more than can be handled, 
+            realized_gates = dplyr::case_when(
+              # If flow data is more than can be handled,
               # set to max number of gates
-              flowData_tmp > (target_flow*ngates) ~ ngates, 
+              flowData_tmp > (target_flow * ngates) ~ ngates,
               # Otherwise, if there are two gates use only one
               ngates == 2 ~ 1,
               # Otherwise, the catch-all final case (indicated with TRUE ~ )
               # is outlet flow divided by target flow
-              TRUE ~ ceiling(flowData/target_flow)
+              TRUE ~ ceiling(flowData / target_flow)
             ),
             # If 0 gates are being used, flow=0
-            # Else, 
-            gateflow = ifelse(realized_gates == 0, 0, flowData/realized_gates)
+            # Else,
+            gateflow = ifelse(realized_gates == 0, 0, flowData / realized_gates)
           )
-          if(multioutlet){
-            mo_table[,1] <- elevXs
-            mo_table[,2] <- newflow
-            for(o in 1:nOutlet){
+          if (multioutlet) {
+            mo_table[, 1] <- elevXs
+            mo_table[, 2] <- newflow
+            for (o in 1:nOutlet) {
               # Here, look up the flow-based survival for both upper and lower
-              # survYs <- c(survYs,survInterp_multi[[i]](newflow))
-              mo_table[,o+2] <- survInterp_multi[[o]](newflow)
+              # [[o]] indexes across the list of interpolation functions in
+              #   survInterp_multi
+              mo_table[, o + 2] <- survInterp_multi[[o]](newflow)
             }
             # Create a simple y=mx+b style lookup here
             # y = survival rates (high and low)
@@ -319,122 +328,135 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets, param_list) 
             # interpolate y~x
             ### min(y2, y1+((y2-y1)*((x1-2100)/(x1-x2))))
             fish_distributed_outlets <- fish_distributed_outlets %>%
-              mutate("{structure}_survival" := 
-              pmin(pmax(mo_table[,3], mo_table[,4]), # if the extrapolated value is greater than
-            #  the maximum survival, just use max. survival 
-                mo_table[,3] +      # y1 equivalent
-                ((mo_table[,4] - mo_table[,3] )* # y2-y1 range
-                ((bottomElev[[1]]-mo_table[,1])/(bottomElev[[1]]-bottomElev[[2]])) # (x1 - new X)/(x1-x2)
+              dplyr::mutate("{structure}_survival" :=
+              pmin(pmax(mo_table[, 3], mo_table[, 4]),
+              # if the extrapolated value is greater than
+              #  the maximum survival, just use max. survival
+                mo_table[, 3] +      # y1 equivalent
+                ((mo_table[, 4] - mo_table[,3] ) * # y2-y1 range
+                ((bottomElev[[1]] - mo_table[, 1]) / (bottomElev[[1]] -
+                  bottomElev[[2]])) # (x1 - new X)/(x1-x2)
                 )
               )
             )
           } else {
-            fish_distributed_outlets <- fish_distributed_outlets %>% 
-                mutate("{structure}_survival" := survLinearInterp(fish_distributed_outlets$gateflow))
+            fish_distributed_outlets <- fish_distributed_outlets %>%
+                dplyr::mutate("{structure}_survival" := 
+                  survLinearInterp(fish_distributed_outlets$gateflow))
           }
-      } else if (resv_data_sub$gate_method=="Peaking Performance") {
+      } else if (resv_data_sub$gate_method == "Peaking Performance") {
         min_flow <- resv_data_sub$min_flow
         max_flow <- resv_data_sub$max_flow
         ngates <- resv_data_sub$n_gates
-        if(min_flow==0){
+        if (min_flow == 0) {
           realized_gates <- ngates
         } else {
-          realized_gates <- data.frame(floor(flowData_tmp/min_flow))
+          realized_gates <- data.frame(floor(flowData_tmp / min_flow))
           # Where greater than ngates, make ngates
-          for(rg in 1:ncol(realized_gates)){
-            realized_gates[which(realized_gates[,rg] > ngates),rg] <- ngates
+          for (rg in 1:ncol(realized_gates)) {
+            realized_gates[which(realized_gates[, rg] > ngates), rg] <- ngates
           }
         }
-        if(multioutlet){
-          mo_table[,1] <- elevXs
+        if (multioutlet) {
+          mo_table[, 1] <- elevXs
           mo_table_min <- mo_table
-          mo_table_min[,2] <- min_flow
-          for(o in 1:nOutlet){
+          mo_table_min[, 2] <- min_flow
+          for (o in 1:nOutlet) {
             # Here, look up the flow-based survival for both upper and lower
-            # survYs <- c(survYs,survInterp_multi[[i]](newflow))
-            mo_table_min[,o+2] <- survInterp_multi[[o]](min_flow)
+            # outlets
+            mo_table_min[, o + 2] <- survInterp_multi[[o]](min_flow)
           }
           # Create a simple y=mx+b style lookup here
           # y = survival rates (high and low)
           # x = elevation of the day
           # interpolate y~x
           ### min(y2, y1+((y2-y1)*((x1-2100)/(x1-x2))))
-          survMinFlow <- pmin(pmax(mo_table_min[,3], mo_table_min[,4]), # if the extrapolated value is greater than
-          #  the maximum survival, just use max. survival 
-            mo_table_min[,3] +      # y1 equivalent
-            ((mo_table_min[,4] - mo_table_min[,3] )* # y2-y1 range
-            ((bottomElev[[1]]-mo_table_min[,1])/(bottomElev[[1]]-bottomElev[[2]])) # (x1 - new X)/(x1-x2)
+          survMinFlow <- pmin(pmax(mo_table_min[, 3], mo_table_min[, 4]), # if the extrapolated value is greater than
+          #  the maximum survival, just use max. survival
+            mo_table_min[, 3] +      # y1 equivalent
+            ((mo_table_min[, 4] - mo_table_min[, 3]) * # y2-y1 range
+            ((bottomElev[[1]] - mo_table_min[, 1]) / (bottomElev[[1]] -
+              bottomElev[[2]])) # (x1 - new X)/(x1-x2)
             )
-          )      
+          )
         } else {
           survMinFlow <- survLinearInterp(min_flow)
         }
         cat(".....Please wait...peaking performance takes a few moments to calculate...")
         # flow_weighted_survival <- c()
-        volLeft_o <- flowData_tmp*24 # Convert to cfs per hour
+        volLeft_o <- flowData_tmp * 24 # Convert to cfs per hour
         # Remove the minimum flow/gate * 24h * number of active gates
-        volLeft <- volLeft_o-(realized_gates*min_flow*24)
+        volLeft <- volLeft_o - (realized_gates * min_flow * 24)
         # Create these empty vectors to fill up
-        if(multioutlet){
+        if (multioutlet) {
           weighted_percent <- data.frame(matrix(
             0,
-            ncol=ncol(volLeft), 
-            nrow=nrow(volLeft) 
+            ncol = ncol(volLeft),
+            nrow = nrow(volLeft)
           ))
         } else {
+          # If not multi-outlet, there is no weighting necessary
           weighted_percent <- c()
         }
         survivalP <- c()
-        for(h in 1:24){ # Have to do this hour by hour...YUCK!
-          print(h)
-          for(g in 1:ngates){
+        #!# could this be made faster? apply?
+        for (h in 1:24) { # Have to do this hour by hour...YUCK!
+          # print(h)
+          for (g in 1:ngates) {
             # If multioutlet, there will be multiple columns for volLeft
-            if(multioutlet){
+            if (multioutlet) {
               # get the minimum of (max flow - min flow) and the current flow left
-              flowAboveMin <- volLeft 
-              for(v in 1:ncol(volLeft)){
-                flowAboveMin[which(flowAboveMin[,v] >= (max_flow-min_flow)),v] <- max_flow-min_flow
+              flowAboveMin <- volLeft
+              for (v in 1:ncol(volLeft)) {
+                flowAboveMin[which(flowAboveMin[, v] >= (max_flow -
+                  min_flow)), v] <- max_flow - min_flow
               }
-              for(o in 1:nOutlet){
-                mo_table[,o+2] <- survInterp_multi[[o]](min_flow+flowAboveMin[,o])
+              for (o in 1:nOutlet) {
+                mo_table[, o + 2] <- survInterp_multi[[o]](min_flow +
+                  flowAboveMin[, o])
               }
-              survivalP <- pmin(pmax(mo_table[,3], mo_table[,4]), # if the extrapolated value is greater than
-                mo_table[,3] +      # y1 equivalent
-                ((mo_table[,4] - mo_table[,3] )* # y2-y1 range
-                ((bottomElev[[1]]-mo_table[,1])/(bottomElev[[1]]-bottomElev[[2]])) # (x1 - new X)/(x1-x2)
+              survivalP <- pmin(pmax(mo_table[, 3], mo_table[, 4]),
+                mo_table[, 3] +      # y1 equivalent
+                ((mo_table[, 4] - mo_table[, 3]) * # y2-y1 range
+                ((bottomElev[[1]] - mo_table[, 1]) / (bottomElev[[1]] -
+                  bottomElev[[2]])) # (x1 - new X)/(x1-x2)
                 )
               )
-              survivalP[which(flowAboveMin[,1]==0)] <- 0
+              survivalP[which(flowAboveMin[, 1] == 0)] <- 0
               # volLeft <- volLeft-flowAboveMin
               # volLeft[volLeft < 0] <- 0
               # weighted_percent <- weighted_percent + (min_flow+flowAboveMin)*survivalP
-              for(o in 1:nOutlet){
-                weighted_percent[,o] <- weighted_percent[,o] + (min_flow+flowAboveMin[,o])*survivalP
-                volLeft[,o] <- volLeft[,o] - flowAboveMin[,o]
+              for (o in 1:nOutlet) {
+                weighted_percent[, o] <- weighted_percent[, o] + (min_flow +
+                  flowAboveMin[, o]) * survivalP
+                volLeft[, o] <- volLeft[, o] - flowAboveMin[, o]
               }
-              volLeft[volLeft < 0] <- 0
+              volLeft[volLeft < 0] <- 0 # Turn negatives into 0
             } else { # if NOT multioutlet, such that volLeft has one column:
               weighted_percent <- c()
               survivalP <- c()
               flowAboveMin <- volLeft
-              flowAboveMin[which(flowAboveMin >= (max_flow-min_flow))] <- max_flow-min_flow
+              flowAboveMin[which(flowAboveMin >= (max_flow -
+                min_flow))] <- max_flow - min_flow
               # Now use this to lookup
-              survivalP <- survLinearInterp(min_flow+flowAboveMin)
-              survivalP[which(flowAboveMin==0)] <- 0
-              weighted_percent <- weighted_percent + (min_flow+flowAboveMin)*survivalP
+              survivalP <- survLinearInterp(min_flow + flowAboveMin)
+              survivalP[which(flowAboveMin == 0)] <- 0
+              weighted_percent <- weighted_percent + (min_flow + flowAboveMin) *
+                survivalP
               volLeft <- pmin(volLeft - flowAboveMin, 0)
             }
           }
         }
-        survivalPercent <- rowMeans(weighted_percent/flowData_tmp/24) #Often these are identical, in my test
+        survivalPercent <- rowMeans(weighted_percent / flowData_tmp / 24)
+        #Often these are identical, in my test
         # only 5/27,010 do not match
         # Include this to be rid of divide by zero issues
-        survivalPercent[survivalPercent==Inf] <- 0
+        survivalPercent[survivalPercent == Inf] <- 0
         fish_distributed_outlets <- fish_distributed_outlets %>%
-          mutate("{structure}_survival" := survivalPercent)
+          dplyr::mutate("{structure}_survival" := survivalPercent)
       }
     }
-    # save survival estimates 
+    # save survival estimates
   }
   return(fish_distributed_outlets)
 }

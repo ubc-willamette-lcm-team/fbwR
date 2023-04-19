@@ -4,10 +4,30 @@ Version: 0.0.0.1
 Authors@R: 
     person("Mairin", "Deith", , "mairin.deith@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = ""))
-Description: The Fish Benefits Workbook (FBW) is a series of calculations to calculate
-estimated 
-
+Description: The Fish Benefits Workbook (FBW) is a simulation model that uses a 
+  series of calculations to estimate how dam structures, operations, and 
+  hydrology impact downstream survival of fish passing dams. It was developed
+  from an Excel Workbook, the Fish Benefits Workbook, into R for the sake  of 
+  expanding the model and to allow for greater use and dissemination of the 
+  model. 
+  The model is based on information about fish timing, dam operations from a 
+  hydrological model (**ResSim, developed by ...**), and estimates of dam passage 
+  efficiency and survival from field studies. It estimates how the distribution
+  of flow through a dam's outlets routes fish through various outlets in a dam,
+  including spillways, turbines, regulating outlets, and a variety of types of 
+  fish passage structures. Calculations are performed for each day within a 
+  hydrological period of record defined in ResSim. 
+  Results from FBW include estimated dam passage efficiency (the proportion of
+  fish expected to successfully pass a dam if they are attempting passage), 
+  distribution of fish through available routes through the dam, and passage 
+  survival through each route.
 License: use_gpl3_license()
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
+Imports: 
+    dplyr,
+    lubridate,
+    readxl,
+    stats,
+    tidyr
