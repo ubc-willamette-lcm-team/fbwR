@@ -1,25 +1,22 @@
 #' Loads FBW data from a defined template spreadsheet in XLSX format. 
 #' @param template_file File path to an Excel spreadsheet with standardized 
 #' inputs
-#' @import read_excel
+#' @import readxl
 #' @import dplyr
 #' @import lubridate
-
+#' 
 #' @export
-#' 
-#' 
-library(here)
+
 loadFromTemplate <- function(template_file) {
   sheetnames <- readxl::excel_sheets(path = template_file)
-  
-  # Check if all of the sheets are there
+  # Check if all of the required sheets are present
+  #   If not, stops running the program
   stopifnot({
-      # Check for sheet names
       all(c(
         "alt_description", "route_specifications",
         "route_effectiveness", "route_dpe",
         "monthly_runtiming", "ro_surv", "ro_elevs",
-        "turb_surv", "spill_surv", "temp_dist", "water_year_types") %in% 
+        "turb_surv", "spill_surv", "temp_dist", "water_year_types") %in%
         sheetnames)
   })
 
@@ -38,9 +35,12 @@ loadFromTemplate <- function(template_file) {
     # Read in as text, change later
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text") %>%
     # Remove the definition of the parameter
-    dplyr::select(-definition)) %>%
-    janitor::row_to_names(., row_number = 1))
-  suppressWarnings(route_specs[,1:5] <- apply(route_specs[,1:5], 2, as.numeric))
+    dplyr::select(-definition)))
+  # The first row can be set as column names, then removed
+  colnames(route_specs) <- route_specs[1, ]
+  route_specs <- route_specs[-1, ]
+  suppressWarnings(
+    route_specs[, 1:5] <- apply(route_specs[, 1:5], 2, as.numeric))
 
   # Route effectiveness data
   route_eff <- readxl::read_excel(path = template_file,
