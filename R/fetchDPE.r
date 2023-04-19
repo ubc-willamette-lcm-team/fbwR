@@ -36,8 +36,8 @@ fetchDPE <- function(ressim_data, param_list){
   #   which can be called later. Providing new X values generates new Y values 
   
   baseline_linear_interpolator <- approxfun(
-    x = param_list$route_dpe$elev, 
-    y = param_list$route_dpe$baseline_dpe, 
+    x = param_list$route_dpe$elev,
+    y = param_list$route_dpe$baseline_dpe,
     rule = 2)
 
   # now, fill in other details based on param_list
