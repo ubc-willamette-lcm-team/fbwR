@@ -1,13 +1,4 @@
-
-# FUNCTION loadResSimData - Function that will read in ResSim data contained in an excel workbook
-#
-#   INPUTS:
-#   infile : 
-#   OUTPUTS:
-#   a global variable, resvData, containing a list of reservoir-specific parameter lists 
-#       (e.g., to get route effectiveness for Detroit, try: resvData$Detroit$RouteEffectiveness) 
-
-#' 
+#' Load data from an Excel ResSim file. 
 #' @param infile A character string indicating the full file path to an
 #' Excel workbook of HEC-ResSim flow outputs. Each of the following worksheets
 #' must be present (`*` indicates a prefix that will be ignored when the file
@@ -26,8 +17,6 @@
 #' @import lubridate
 #' 
 #' @export
-
-infile <- here("17_01_2023_TemplateLoader", "CGR_ResSim_NAA.xlsm")
 
 loadResSim <- function(infile, wide = TRUE) {
     
