@@ -24,10 +24,9 @@ Description: The Fish Benefits Workbook (FBW) is a simulation model that uses a
 License: use_gpl3_license()
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Imports: 
     dplyr,
     lubridate,
     readxl,
-    stats,
     tidyr

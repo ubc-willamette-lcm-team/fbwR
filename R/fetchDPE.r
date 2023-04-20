@@ -18,7 +18,7 @@
 #' @return A vector of DPE with one entry for each pool elevation provided.
 #' 
 #' @import dplyr
-#' @importFrom stats, approxfun
+#' @import stats
 #' @export
 
 fetchDPE <- function(ressim_data, param_list){

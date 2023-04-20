@@ -3,7 +3,18 @@
 #' @aliases distributeFish_daily
 #' @param ressim_data A dataframe that includes at least Date (in datetime
 #' format) and Outflow (cfs)
-#' @param param_list
+#' @param param_list A list including at least the following named objects: 
+#'   `alt_desc`, with named entry "collector", the fish passage structure name
+#'   `route_dpe`, a dataframe including columns `elev`, `baseline_dpe`, and any 
+#' number of other columns to the right of these that can be used to look up DPE
+#' at various pool elevations)
+#'   `fps_max_elev`: a single numeric value, the maximum pool elevation at 
+#'   which the fish passage structure can operate)
+#'   `fps_bottom_elev`: a single numeric value, the minimum pool elevation (in
+#'   feet) at which the fish passage structure can operate
+#'   `dpe_x_position`: a single numeric value referencing which column of the 
+#'   DPE lookup table (provided in `param_list`). Used to determine how many
+#' which column of `route_dpe` AFTER the baseline should be selected?
 #' @return Dataframe matching ressim_data but with new columns appended:
 #' "fry_DailyDistribution", "sub_DailyDistribution", "year_DailyDistribution"
 #' containing the calculated proportion of fry, sub-yearlings, and yearlngs
