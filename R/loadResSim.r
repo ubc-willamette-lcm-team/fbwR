@@ -11,6 +11,22 @@
 #' @param wide Are data in wide format (e.g., year across columns, one row for each 
 #' day in the 365-day year, Feb 29 in leap years are ignored)? Defaults to TRUE,
 #' following standard input format of Res-Sim spreadsheets.
+#' @param elevsheet  Name of Excel sheet containing ResSim results for pool
+#' elevation. If not provided, defaults to `NULL` and the function will use th
+#' first sheet ending in "-out"
+#' @param outflowsheet Name of Excel sheet containing ResSim results for flow
+#' through all outlets for each day in the period of record. If not provided,
+#' defaults to `NULL` and the function will use the first sheet ending in "-out"
+#' @param powerhousesheet Name of Excel sheet containing ResSim results for flow
+#' through the powerhouse route. If not provided, defaults to `NULL` and the
+#' function will use the first sheet ending in "-ph"
+#' @param rosheet Name of Excel sheet containing ResSim results for flow
+#' through the regulating outlet route. If not provided, defaults to `NULL` and
+#' the function will use the first sheet ending in "-ro"
+#' @param spillsheet Name of Excel sheet containing ResSim results for flow
+#' through the spillway route. If not provided, defaults to `NULL` and
+#' the function will use the first sheet ending in "-spill"
+#' 
 #' @import dplyr
 #' @import tidyr
 #' @import readxl
@@ -18,32 +34,46 @@
 #' 
 #' @export
 
-loadResSim <- function(infile, wide = TRUE) {
-    
+loadResSim <- function(infile, wide = TRUE,
+  elevsheet = NULL, outflowsheet = NULL, powerhousesheet = NULL,
+  rosheet = NULL, spillsheet = NULL) {
     sheetnames <- readxl::excel_sheets(path = infile)
-    
-    elev <- data.frame(readxl::read_excel(na=character(), trim_ws = F,  infile,
-        sheet = sheetnames[grep(pattern = "-elev$", x = tolower(sheetnames))],
+    elev <- data.frame(readxl::read_excel(na = character(), trim_ws = F,  infile,
+        sheet = ifelse(
+            is.null(elevsheet),
+            sheetnames[grep(pattern = "-elev$", x = tolower(sheetnames))],
+            elevsheet),
         col_names = TRUE, range = "A7:BW372"))
     colnames(elev)[1] <- "Date"
     
-    outflow <- data.frame(readxl::read_excel(na=character(), trim_ws = F,  infile,
-        sheet = sheetnames[grep(pattern = "-out$", x = tolower(sheetnames))],
-        col_names = TRUE, range = "A7:BW372"))
+    outflow <- data.frame(readxl::read_excel(na = character(), trim_ws = F, 
+      infile,
+      sheet = ifelse(is.null(outflowsheet),
+        sheetnames[grep(pattern = "-out$", x = tolower(sheetnames))],
+        outflowsheet), 
+      col_names = TRUE, range = "A7:BW372"))
     colnames(outflow)[1] <- "Date"
     
-    turbine <- data.frame(readxl::read_excel(na=character(), trim_ws = F,  infile,
-        sheet = sheetnames[grep(pattern = "-ph$", x = tolower(sheetnames))],
-        col_names = TRUE, range = "A7:BW372"))
+    turbine <- data.frame(readxl::read_excel(na = character(), trim_ws = F,
+      infile,
+      sheet = ifelse(is.null(powerhousesheet),
+        sheetnames[grep(pattern = "-ph$", x = tolower(sheetnames))],
+        powerhousesheet),
+      col_names = TRUE, range = "A7:BW372"))
     colnames(turbine)[1] <- "Date"
     
-    RO <- data.frame(readxl::read_excel(na=character(), trim_ws = F,  infile,
-        sheet = sheetnames[grep(pattern = "-ro$", x = tolower(sheetnames))],
-        col_names = TRUE, range = "A7:BW372"))
+    RO <- data.frame(readxl::read_excel(na = character(), trim_ws = F,
+      infile,
+      sheet = ifelse(is.null(rosheet),
+        sheetnames[grep(pattern = "-ro$", x = tolower(sheetnames))],
+        rosheet),
+      col_names = TRUE, range = "A7:BW372"))
     colnames(RO)[1] <- "Date"
-    spill <- data.frame(readxl::read_excel(na=character(), trim_ws = F,  infile,
-        sheet = sheetnames[grep(pattern = "-spill$", x = tolower(sheetnames))],
-        col_names = TRUE, range = "A7:BW372"))
+    spill <- data.frame(readxl::read_excel(na = character(), trim_ws = F,  infile,
+      sheet = ifelse(is.null(spillsheet),
+        sheetnames[grep(pattern = "-spill$", x = tolower(sheetnames))],
+        spillsheet),
+      col_names = TRUE, range = "A7:BW372"))
     colnames(spill)[1] <- "Date"
     # Set up this list for quick formatting/comprehension later
     ressim_list <- list(elev, outflow, turbine, RO, spill)
