@@ -1,0 +1,33 @@
+---
+title: "Quickstart Guide to the Fish Benefits Workbook"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Quickstart Guide to the Fish Benefits Workbook}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette is intended for a very quick starting guide to using the app. 
+It is not intended for a deep look at the steps in the Fish Benefits Workbook, and it doesn't discuss parameterization of the model. 
+We assume that you have a template on hand, or can use the built-in template.
+
+First, load the `fbwR` library.
+
+```{r setup}
+library(fbwR)
+```
+
+## Load the parameter template file
+
+```{r load_template}
+system.file("extdata", package = "fbwR")
+# Or
+fs::path_package("extdata", "", package = "fbwR")
+```
