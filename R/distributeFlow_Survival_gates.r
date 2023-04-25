@@ -50,6 +50,10 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
     # Select only the relevant reservoir data
     resv_data_sub <- resv_data[which(tolower(
       rownames(resv_data)) == structure), ]
+    stopifnot(
+      resv_data_sub$method %in% c("Equal Q", "Min Q to equal", "Unit to Max Q",
+        "Target Q", "Peaking Performance")
+    )
     if (structure != "fps" && tolower(resv_data_sub$normally_used) == "n") {
       cat(paste0("! Route ", i,
         " not normally used, setting survival rate = 0.\n"))
@@ -406,6 +410,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
             # If multioutlet, there will be multiple columns for volLeft
             if (multioutlet) {
               # get the minimum of (max flow - min flow) and the current flow left
+              # This is flow on top of the minimum, "AboveMin"
               flowAboveMin <- volLeft
               for (v in 1:ncol(volLeft)) {
                 flowAboveMin[which(flowAboveMin[, v] >= (max_flow -
