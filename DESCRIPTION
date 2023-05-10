@@ -1,5 +1,6 @@
 Package: fbwR
-Title: Fish Benefits Workbook in R: Estimating Downstream Fish Passage and Survival
+Title: Fish Benefits Workbook in R: Estimating Downstream Fish Passage
+        and Survival
 Version: 0.0.0.1
 Authors@R: 
     person("Mairin", "Deith", , "mairin.deith@gmail.com", role = c("aut", "cre"),
@@ -25,14 +26,11 @@ License: use_gpl3_license()
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
-Imports: 
-    dplyr,
-    lubridate,
-    readxl,
-    tidyr
-Depends: 
-    R (>= 2.10)
-Suggests: 
-    knitr,
-    rmarkdown
+Imports: dplyr, lubridate, readxl, tidyr
+Depends: R (>= 2.10)
+Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
+NeedsCompilation: no
+Packaged: 2023-04-28 18:48:30 UTC; mdeith
+Author: Mairin Deith [aut, cre]
+Maintainer: Mairin Deith <mairin.deith@gmail.com>

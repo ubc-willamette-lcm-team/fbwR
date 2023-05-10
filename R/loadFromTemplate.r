@@ -16,7 +16,8 @@ loadFromTemplate <- function(template_file) {
         "alt_description", "route_specifications",
         "route_effectiveness", "route_dpe",
         "monthly_runtiming", "ro_surv", "ro_elevs",
-        "turb_surv", "spill_surv", "temp_dist", "water_year_types") %in%
+        "turb_surv", "spill_surv", "fps_surv",
+        "temp_dist", "water_year_types") %in%
         sheetnames)
   })
 
@@ -67,6 +68,9 @@ loadFromTemplate <- function(template_file) {
   spill_surv <- readxl::read_excel(path = template_file,
     sheet = "spill_surv", skip = 5,
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
+  fps_surv <- readxl::read_excel(path = template_file,
+    sheet = "fps_surv", skip = 5,
+    na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
   ## Still have to read in the temperature distribution data
   # Just include in the Excel file like FBW Excel heh
   temp_dist <- readxl::read_excel(path = template_file,
@@ -87,6 +91,7 @@ loadFromTemplate <- function(template_file) {
     "ro_elevs" = ro_elevs,
     "turb_surv" = turb_surv,
     "spill_surv" = spill_surv,
+    "fps_surv" = fps_surv,
     "temp_dist" = temp_dist,
     "water_year_types" = water_year_types
   ))
