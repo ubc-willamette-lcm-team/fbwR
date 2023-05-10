@@ -96,7 +96,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       surv_table <- data.frame(param_list[[paste0(structure, "_surv")]]) %>%
         dplyr::mutate(across(everything(), as.numeric))
       # Check if there is a gate method provided, if not quit.
-      if( is.na(resv_data_sub$gate_method)){
+      if(is.na(resv_data_sub$gate_method)) {
         stop("No gate method provided.")
       } else {
         cat(paste0(".....gate method: ", resv_data_sub$gate_method, "\n"))
@@ -122,9 +122,9 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         for(o in 1:nOutlet){
           # add a linear interpolation function to the survInterp_multi list
           survInterp_multi <- c(survInterp_multi, approxfun(
-            x=unlist(surv_table[,1]), 
-            y=unlist(surv_table[,o+1]),
-            rule=2
+            x = unlist(surv_table[, 1]),
+            y = unlist(surv_table[, o+1]),
+            rule = 2
           ))
         }
         # Save these variables for later
@@ -134,17 +134,17 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           matrix(
             NA, 
             # One for each day of the series
-            nrow=nrow(fish_distributed_outlets),
+            nrow = nrow(fish_distributed_outlets),
             # Number of columns: flow, elevation, flow-based survival upper, flow-based survival lower
-            ncol=ncol(surv_table) + 1
+            ncol = ncol(surv_table) + 1
           )
         )
         colnames(mo_table) <- c("elevs", "newFlow", paste0("survOutlet", 1:nOutlet))
       } else { # if not multiOutlet
         # The "nonflow" column will be the survival rate
-        nonflow <- which(colnames(surv_table)!="flow")
+        nonflow <- which(colnames(surv_table) != "flow")
         survLinearInterp <- approxfun(
-          x=surv_table$flow, 
+          x=surv_table$flow,
           y=surv_table[,nonflow],
           rule=2
         )
@@ -290,6 +290,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           weighted_survival <- ifelse(
             is.na(nearestSurv),
             weighted_survival,
+            # Here, have to use an ifelse to avoid dividing by 0
             weighted_survival + (newflow * (1 / ifelse(
               flowData_tmp == 0, Inf, flowData_tmp)) * nearestSurv)
           )

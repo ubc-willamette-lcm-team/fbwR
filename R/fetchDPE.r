@@ -17,7 +17,6 @@
 #' which column of `route_dpe` AFTER the baseline should be selected?
 #' @return A vector of DPE with one entry for each pool elevation provided.
 #' 
-#' 
 #' @import dplyr
 #' @import stats
 #' @export

@@ -42,7 +42,6 @@ distributeFishDaily <- function(ressim_data, param_list) {
     ) %>%
     ungroup()
   
-
   # Assess which timing should be used - baseline or FPS-modified?
   if (param_list$alt_desc[["fps_alternative"]] == "Y") {
 
