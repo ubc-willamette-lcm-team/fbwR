@@ -1,8 +1,41 @@
-### BELOW ARE DEPRECATED FUNCTIONS
-loadFromWorkbook <- function(fbw_excel, reservoir, quickset) {
+#' Load FBW parameters from an Excel workbook, requiring only the name of the 
+#' reservoir and the name of the quickset. If none are given, the reservoir
+#' name and quickset name are read from the "Route Survival Model" landing page
+#' of the FBW workbook.
+#' @param fbw_excel Character string referencing the location of the Excel file 
+#' to be read. Parameters will be compiled from the ResvData and QuickSets 
+#' sheets.
+#' @param reservoir (Optional) Name of the reservoir being modelled. Used to 
+#' lookup which entries of the ResvData and QuickSets should be loaded into FBW.
+#' If not provided, `reservoir` is read from cell B6 of the Route Survival Model
+#' sheet in `fbw_excel`.
+#' @param quickset (Optional) Name of the quickset being modelled. Used to 
+#' lookup which entries of the QuickSets sheet should be loaded into FBW.
+#' If not `reservoir` and `quickset` are not provided, `quickset` is read from 
+#' cell B7 of the Route Survival Model sheet in `fbw_excel`.
+#' @import dplyr
+#' @import lubridate
+#' @import readxl
+#' @export
+
+loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
+  # If reservoir is NULL, let's read both the quickset and reservoir
+  reservoir <- ifelse(is.null(reservoir),
+    # If null, read it in
+    unlist(as.character(suppressMessages(
+      readxl::read_excel(fbw_excel, col_names = FALSE,
+        sheet = "Route Survival Model", range = "B6")))),
+    reservoir)
+  quickset <- ifelse(is.null(quickset),
+    # If null, read it in
+    unlist(as.character(suppressMessages(
+      readxl::read_excel(fbw_excel, col_names = FALSE,
+        sheet = "Route Survival Model", range = "B7")))),
+    quickset)
+  # Start reading in parameters
   resvsheet <- readxl::read_excel(fbw_excel,
     sheet = "ResvData")
-  qset <- readxl::read_excel(fbw_excel, sheet = "QuickSets")
+  suppressMessages(qset <- readxl::read_excel(fbw_excel, sheet = "QuickSets"))
   stopifnot(rs_model_resv %in% na.omit(unique(qset$Reservoir)))
   # Subset the quickset data rows to those which correspond to the reservoirs
   # Find those which are NOT empty: These are the breaks in rows between
@@ -128,8 +161,8 @@ loadFromWorkbook <- function(fbw_excel, reservoir, quickset) {
   )
   ### Fish approaching
   fishapproach_idx <- c(
-      resvnames[which(names(resvnames) == "Baseline Fish approaching")] + 1,
-      resvnames[which(names(resvnames) == "Route Effectiveness Spillway")] - 1)
+    resvnames[which(names(resvnames) == "Baseline Fish approaching")] + 1,
+    resvnames[which(names(resvnames) == "Route Effectiveness Spillway")] - 1)
   monthly_runtiming <- data.frame(
     date = as.Date(as.numeric(resvsheet[
       fishapproach_idx[1]:fishapproach_idx[2],]$`Raw Data Sheet Names`),
@@ -188,8 +221,65 @@ loadFromWorkbook <- function(fbw_excel, reservoir, quickset) {
       (resvnames["FP Surv Q"] - 1),
       which(colnames(resvsheet) == reservoir)]))
   ))
-  
-  return(list(
+  fps_surv <- na.omit(data.frame(
+    flow = as.numeric(unlist(resvsheet[
+      (resvnames["FP Surv Q"] + 1):
+      (resvnames["FP Surv"] - 1),
+      which(colnames(resvsheet) == reservoir)])),
+    fps_surv = as.numeric(unlist(resvsheet[
+      (resvnames["FP Surv"] + 1):
+      (resvnames["Baseline Survival Percentages (for graph)"] - 2),
+      which(colnames(resvsheet) == reservoir)]))
+  ))
+  ## Temperature data and water year types
+  tempsplit <- readxl::read_excel(fbw_excel, sheet = "TEMP-SPLIT")
+  # wow this is a lot of work to modify column names
+  year_types <- sapply(colnames(tempsplit)[-1], function(X) {
+    substring(X, first = 1,
+      last = regexpr(X, pattern = "...", fixed = TRUE)[1] - 1)})
+  # There will be some extra columns which begin with ".." now, remove these
+  #   after searching with regular expressions via grep()
+  year_types <- year_types[-which(year_types == "")]
+  names(year_types) <- as.numeric(tempsplit[6, 2:(1 + length(year_types))])
+  water_year_types <- data.frame(
+    year = names(year_types),
+    type = unlist(year_types)
+  )
+  # Temperature distributions need to be looked up from
+  # a series of columns
+  which(tempsplit[2,] == "Active Reservoir:") + 2
+  available_temps <- na.omit(unique(unlist(tempsplit[2, 
+    (which(tempsplit[2,] == "Active Reservoir:") + 2):
+    (which(tempsplit[2,] == "Green Peter"))
+    ])))
+  if (!(reservoir %in% available_temps)) {
+    warning("No temperature data provided for reservoir ", reservoir)
+    temp_dist <- data.frame(
+      Date = NA,
+      ABUNDANT = NA,
+      ADEQUATE = NA,
+      DEFICIT = NA,
+      INSUFFICIENT = NA
+    )
+  } else {
+    idx <- which(tempsplit[2, ] == reservoir)
+    temp_dist <- data.frame(
+      Date = as.Date(as.numeric(unlist(tempsplit[6:40, idx])),
+        origin = "1899-12-30"),
+      coolwet = as.numeric(unlist(tempsplit[6:40, idx + 1])),
+      normal = as.numeric(unlist(tempsplit[6:40, idx + 2])),
+      hotdry = as.numeric(unlist(tempsplit[6:40, idx + 3]))
+    ) %>%
+    mutate(
+      ABUNDANT = coolwet,
+      ADEQUATE = normal,
+      DEFICIT = (normal + hotdry) / 2,
+      INSUFFICIENT = hotdry
+    ) %>%
+    select(-c(coolwet, normal, hotdry))
+  }
+  # Compile into named list
+  params <- list(
     "alt_desc" = alt_desc_list,
     "route_specs" = route_specs,
     "route_eff" = route_eff,
@@ -198,12 +288,23 @@ loadFromWorkbook <- function(fbw_excel, reservoir, quickset) {
     "ro_surv" = ro_surv,
     "ro_elevs" = ro_elevs,
     "turb_surv" = turb_surv,
+    "fps_surv" = fps_surv,
     "spill_surv" = spill_surv,
+
     "temp_dist" = temp_dist,
-    "water_year_types" = water_year_types
-  ))
+    "water_year_types" = water_year_types,
+    
+    "reservoir" = reservoir,
+    "quickset" = quickset
+  )
+  ## Also have to read in ResSims
+  
 }
 
+# params <- loadFromWorkbook("C:/Users/mdeith/OneDrive - UBC/Willamette/FishBenefitWorkbook/ExcelFBW_InputParams/FBW-Chinook-Fry_CGR_Alt4_8-20-2021_MDTinkeringMonthly.xlsm")
+# params
+# params <- loadFromWorkbook()
+################################################################################
 #' Load parameters required for FBW-R from a pre-filled Excel workbook using
 #' two superceded functions: loadResvData_FBWworkbook and
 #' loadQuickset_FBWworkbook
@@ -695,7 +796,7 @@ loadQuicksetData_FBWworkbook <- function(infile, quickset_row) {
     if(all(is.na(dpe_x_range))){
         # Just in case no 'X' is provided in the DPE selection portion of the quickset,
         #   default to the baseline DPE values
-        warning("Nothing in the 'Effectiveness \"x\" columns' of the QuickSets FBW sheet.\nAssuming you want to use the baseline case - if not, please fill in the values and try again (or input by hand).")
+        warning("Nothing in the 'Effectiveness /"x/" columns' of the QuickSets FBW sheet./nAssuming you want to use the baseline case - if not, please fill in the values and try again (or input by hand).")
         outlist$dpe_x_position <- 1
     } else if("X" %in% dpe_x_range) {
         outlist$dpe_x_position <- which(toupper(dpe_x_range)=="X")
@@ -704,7 +805,7 @@ loadQuicksetData_FBWworkbook <- function(infile, quickset_row) {
         outlist$dpe_x_position <- which(!(is.na(dpe_x_range)))
         indicator_character <- as.character(dpe_x_range[outlist$dpe_x_position])
         warning(paste0(
-            "No \"x\" or \"X\" entered in the 'Effectiveness \"x\" columns' of the QuickSets FBW sheet.\nUsing ", indicator_character, " as indicator of the column you want to use (position ", outlist$dpe_x_position, ")."))
+            "No /"x/" or /"X/" entered in the 'Effectiveness /"x/" columns' of the QuickSets FBW sheet./nUsing ", indicator_character, " as indicator of the column you want to use (position ", outlist$dpe_x_position, ")."))
     }
     outlist
 }

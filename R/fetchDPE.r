@@ -21,12 +21,12 @@
 #' @import stats
 #' @export
 
-fetchDPE <- function(ressim_data, param_list){
+fetchDPE <- function(ressim_data, param_list) {
   # First, check to see what kind of DPE data we need (only baseline, FSS, etc.)
   fps_type <- param_list$alt_desc[["collector"]]
   ### ~~~ To make uncertain: find a linear function that this is derived
   ###   from real-world data. There is presumably some function that 
-  ###   underlies this: 
+  ###   underlies this:
   ###     DPE ~ elev + NOISE
   ###   so if we generate the NOISE randomly we can add random deviates 
   ###   (centred on 0)
