@@ -4,7 +4,15 @@
 \alias{loadResSim}
 \title{Load data from an Excel ResSim file.}
 \usage{
-loadResSim(infile, wide = TRUE)
+loadResSim(
+  infile,
+  wide = TRUE,
+  elevsheet = NULL,
+  outflowsheet = NULL,
+  powerhousesheet = NULL,
+  rosheet = NULL,
+  spillsheet = NULL
+)
 }
 \arguments{
 \item{infile}{A character string indicating the full file path to an
@@ -20,6 +28,26 @@ row for each day in the year.}
 \item{wide}{Are data in wide format (e.g., year across columns, one row for each
 day in the 365-day year, Feb 29 in leap years are ignored)? Defaults to TRUE,
 following standard input format of Res-Sim spreadsheets.}
+
+\item{elevsheet}{Name of Excel sheet containing ResSim results for pool
+elevation. If not provided, defaults to \code{NULL} and the function will use th
+first sheet ending in "-out"}
+
+\item{outflowsheet}{Name of Excel sheet containing ResSim results for flow
+through all outlets for each day in the period of record. If not provided,
+defaults to \code{NULL} and the function will use the first sheet ending in "-out"}
+
+\item{powerhousesheet}{Name of Excel sheet containing ResSim results for flow
+through the powerhouse route. If not provided, defaults to \code{NULL} and the
+function will use the first sheet ending in "-ph"}
+
+\item{rosheet}{Name of Excel sheet containing ResSim results for flow
+through the regulating outlet route. If not provided, defaults to \code{NULL} and
+the function will use the first sheet ending in "-ro"}
+
+\item{spillsheet}{Name of Excel sheet containing ResSim results for flow
+through the spillway route. If not provided, defaults to \code{NULL} and
+the function will use the first sheet ending in "-spill"}
 }
 \description{
 Load data from an Excel ResSim file.

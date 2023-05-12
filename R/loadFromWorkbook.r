@@ -36,7 +36,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   resvsheet <- readxl::read_excel(fbw_excel,
     sheet = "ResvData")
   suppressMessages(qset <- readxl::read_excel(fbw_excel, sheet = "QuickSets"))
-  stopifnot(rs_model_resv %in% na.omit(unique(qset$Reservoir)))
+  stopifnot(reservoir %in% na.omit(unique(qset$Reservoir)))
   # Subset the quickset data rows to those which correspond to the reservoirs
   # Find those which are NOT empty: These are the breaks in rows between
   #  reservoir quickset "chunks"
@@ -45,9 +45,9 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   # Now, we can use the reservoir to look up the indices
   qset_range <- qs_breaks[c(
       # Start at the row which corresponds to the reservoir
-          which(names(qs_breaks) == rs_model_resv),
+          which(names(qs_breaks) == reservoir),
       # End at the row of the next reservoir, minus 1
-          (which(names(qs_breaks) == rs_model_resv) + 1)
+          (which(names(qs_breaks) == reservoir) + 1)
       )]
   # Don't read the first row of the next reservoir's quickset block
   qset_range[2] <- qset_range[2] - 1
@@ -298,7 +298,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     "quickset" = quickset
   )
   ## Also have to read in ResSims
-  
+
 }
 
 # params <- loadFromWorkbook("C:/Users/mdeith/OneDrive - UBC/Willamette/FishBenefitWorkbook/ExcelFBW_InputParams/FBW-Chinook-Fry_CGR_Alt4_8-20-2021_MDTinkeringMonthly.xlsm")
@@ -796,7 +796,7 @@ loadQuicksetData_FBWworkbook <- function(infile, quickset_row) {
     if(all(is.na(dpe_x_range))){
         # Just in case no 'X' is provided in the DPE selection portion of the quickset,
         #   default to the baseline DPE values
-        warning("Nothing in the 'Effectiveness /"x/" columns' of the QuickSets FBW sheet./nAssuming you want to use the baseline case - if not, please fill in the values and try again (or input by hand).")
+        warning("Nothing in the 'Effectiveness X columns' of the QuickSets FBW sheet./nAssuming you want to use the baseline case - if not, please fill in the values and try again (or input by hand).")
         outlist$dpe_x_position <- 1
     } else if("X" %in% dpe_x_range) {
         outlist$dpe_x_position <- which(toupper(dpe_x_range)=="X")
@@ -805,7 +805,7 @@ loadQuicksetData_FBWworkbook <- function(infile, quickset_row) {
         outlist$dpe_x_position <- which(!(is.na(dpe_x_range)))
         indicator_character <- as.character(dpe_x_range[outlist$dpe_x_position])
         warning(paste0(
-            "No /"x/" or /"X/" entered in the 'Effectiveness /"x/" columns' of the QuickSets FBW sheet./nUsing ", indicator_character, " as indicator of the column you want to use (position ", outlist$dpe_x_position, ")."))
+            "No 'x' or 'X' entered in the 'Effectiveness X columns' of the QuickSets FBW sheet./nUsing ", indicator_character, " as indicator of the column you want to use (position ", outlist$dpe_x_position, ")."))
     }
     outlist
 }
