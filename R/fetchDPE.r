@@ -1,7 +1,7 @@
 #' Look up dam passage efficiency (DPE) for a given set of fish passage 
 #' structures and pool elevation (and elevation limits)
 #' 
-#' @param ressim_data Data frame including at least the following column names:
+#' @param ressim Data frame including at least the following column names:
 #' elev (pool elevation, one per day in the period of record); 
 #' @param param_list A list including at least the following named objects: 
 #'   `alt_desc`, with named entry "collector", the fish passage structure name
@@ -21,7 +21,7 @@
 #' @import stats
 #' @export
 
-fetchDPE <- function(ressim_data, param_list) {
+fetchDPE <- function(ressim, param_list) {
   # First, check to see what kind of DPE data we need (only baseline, FSS, etc.)
   fps_type <- param_list$alt_desc[["collector"]]
   ### ~~~ To make uncertain: find a linear function that this is derived
@@ -44,6 +44,7 @@ fetchDPE <- function(ressim_data, param_list) {
     elevmax_FPS <- -Inf
   } else {
     # If max elevation for the FPS is blank/empty, set to -Inf
+    # If the maximum elevation is -Inf, 
     elevmax_FPS <- ifelse(identical(param_list$fps_max_elev, numeric(0)),
       elevmax_FPS <- Inf,
       elevmax_FPS <- param_list$fps_max_elev
@@ -60,17 +61,17 @@ fetchDPE <- function(ressim_data, param_list) {
       y = unlist(param_list$route_dpe[, selected_dpe_col]),
       rule = 2
     )
-  baseline_dpe <- baseline_linear_interpolator(ressim_data$elev)
-  fps_dpe <- selected_dpe_interpolator(ressim_data$elev)
+  baseline_dpe <- baseline_linear_interpolator(ressim$elev)
+  fps_dpe <- selected_dpe_interpolator(ressim$elev)
 
-  ressim_data <- ressim_data %>%
+  ressim <- suppressWarnings(ressim %>%
     dplyr::mutate(
       dam_passage_efficiency = dplyr::case_when(
         # If within elevation boundaries, apply DPE
-        elev >= elevmin_FPS && elev <= elevmax_FPS ~ fps_dpe,
+        (elev >= elevmin_FPS && elev <= elevmax_FPS) ~ fps_dpe,
         # Otherwise (i.e., TRUE, a catch-all for the rest) use baseline
         TRUE ~ baseline_dpe
       )
-    )
-  return(ressim_data)
+    ))
+  return(ressim)
 }

@@ -2,6 +2,7 @@
 
 export(distributeFishDaily)
 export(distributeFish_outlets)
+export(distributeFlow_Survival_gates)
 export(fetchDPE)
 export(loadFromTemplate)
 export(loadFromWorkbook)

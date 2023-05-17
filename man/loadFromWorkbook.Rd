@@ -24,6 +24,9 @@ lookup which entries of the QuickSets sheet should be loaded into FBW.
 If not \code{reservoir} and \code{quickset} are not provided, \code{quickset} is read from
 cell B7 of the Route Survival Model sheet in \code{fbw_excel}.}
 }
+\value{
+A list of parameters required to run the FBW model in R.
+}
 \description{
 Load FBW parameters from an Excel workbook, requiring only the name of the
 reservoir and the name of the quickset. If none are given, the reservoir

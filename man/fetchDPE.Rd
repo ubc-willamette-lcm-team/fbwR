@@ -5,10 +5,10 @@
 \title{Look up dam passage efficiency (DPE) for a given set of fish passage
 structures and pool elevation (and elevation limits)}
 \usage{
-fetchDPE(ressim_data, param_list)
+fetchDPE(ressim, param_list)
 }
 \arguments{
-\item{ressim_data}{Data frame including at least the following column names:
+\item{ressim}{Data frame including at least the following column names:
 elev (pool elevation, one per day in the period of record);}
 
 \item{param_list}{A list including at least the following named objects:

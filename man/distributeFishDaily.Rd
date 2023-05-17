@@ -6,10 +6,10 @@
 \title{Distribute fish approaching a dam in a given month into daily approaching
 subpopulations.}
 \usage{
-distributeFishDaily(ressim_data, param_list)
+distributeFishDaily(ressim, param_list, verbose = FALSE)
 }
 \arguments{
-\item{ressim_data}{A dataframe that includes at least Date (in datetime
+\item{ressim}{A dataframe that includes at least Date (in datetime
 format) and Outflow (cfs)}
 
 \item{param_list}{A list including at least the following named objects:
@@ -24,9 +24,15 @@ feet) at which the fish passage structure can operate
 \code{dpe_x_position}: a single numeric value referencing which column of the
 DPE lookup table (provided in \code{param_list}). Used to determine how many
 which column of \code{route_dpe} AFTER the baseline should be selected?}
+
+\item{verbose}{(for checking of outputs) If \code{FALSE}, the default value, the
+returned dataframe will not include intermediate calculations (e.g., monthly
+flow rates). It may be helpful for debugging purposes to retain the columns
+that contain these intermediate steps. Setting \code{verbose = TRUE} will return
+all columns.}
 }
 \value{
-Dataframe matching ressim_data but with new columns appended:
+Dataframe matching ressim but with new columns appended:
 "fry_DailyDistribution", "sub_DailyDistribution", "year_DailyDistribution"
 containing the calculated proportion of fry, sub-yearlings, and yearlngs
 approaching the dam on each day

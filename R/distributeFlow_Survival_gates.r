@@ -5,7 +5,7 @@
 #' through those individual gates as a function of flow (or as a fixed value,
 #' depending on parameterization).
 #' @param fish_distributed_outlets A list including at least the following named
-#'  objects: 
+#'  objects:
 #' route_dpe (a dataframe including columns `elev`, `baseline_dpe`, and any
 #' number of other columns to the right of these that can be used to look up DPE
 #' at various pool elevations).
@@ -38,6 +38,8 @@
 #'   mortality rate associated with reregulation (i.e., 1 - survival).
 #' @param resv_data Data on number of gates, as well as minimum and maximum flow
 #' rates for each outlet type at the dam
+#' @export
+#'
 #' @import dplyr
 
 distributeFlow_Survival_gates <- function(fish_distributed_outlets, 

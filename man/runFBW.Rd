@@ -7,19 +7,25 @@
 runFBW(
   template_file = NULL,
   param_list = NULL,
-  ressim_path = NULL,
+  ressim_file = NULL,
   ressim = NULL,
   ressim_wide = TRUE,
-  summarize = FALSE
+  summarize = FALSE,
+  verbose = FALSE
 )
 }
 \arguments{
+\item{template_file}{File path to an Excel spreadsheet with standardized
+inputs. One of \code{template_path} or \code{param_list} must be provided; if using
+a template, it is loaded and translated into a parameter list like
+\code{param_list}.}
+
 \item{param_list}{Named list of FBW parameters created when the template
 is read. This allows parameters to be modified or created manually without
 having to create a separate template file. One of \code{template_path} or
 \code{param_list} must be provided.}
 
-\item{ressim_path}{File path to an Excel spreadsheet with ResSim inputs.
+\item{ressim_file}{File path to an Excel spreadsheet with ResSim inputs.
 One of \code{ressim_path} or \code{ressim_file} must be provided.}
 
 \item{ressim}{A loaded file (e.g., using the \code{loadResSim} function)
@@ -33,11 +39,6 @@ year, with each row representing a single day in the 365-day year.}
 \item{summarize}{Should the daily outputs be summarized into average monthly
 survival estimates? This summarizes across years within the period of record
 in the ResSim input file.}
-
-\item{template_path}{File path to an Excel spreadsheet with standardized
-inputs. One of \code{template_path} or \code{param_list} must be provided; if using
-a template, it is loaded and translated into a parameter list like
-\code{param_list}.}
 }
 \description{
 Loads FBW data from a defined template spreadsheet in XLSX format.
