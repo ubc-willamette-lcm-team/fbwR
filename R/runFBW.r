@@ -60,8 +60,8 @@ runFBW <- function(template_file = NULL, param_list = NULL,
   fish_passage_survival <- route_survival_rates %>%
     dplyr::mutate(
       passage_survRO = ro_survival * F.RO,
-      passage_survTurb = turb_survival * F.turb_flow,
-      passage_survSpill = spill_survival * F.spill_flow,
+      passage_survTurb = turb_survival * F.turb,
+      passage_survSpill = spill_survival * F.spill,
       passage_survFPS = fps_survival * F.FPS,
       passage_survAllRoutes = passage_survRO + passage_survTurb +
         passage_survSpill + passage_survFPS
@@ -88,7 +88,7 @@ runFBW <- function(template_file = NULL, param_list = NULL,
         ) %>%
         dplyr::ungroup() %>% # Remove grouping, re-group to only Month
         dplyr::group_by(Month) %>%
-        dplyr::summarise( 
+        dplyr::summarise(
           # Now add together daily means into monthly sums
           meanFPS = sum(dailyMeanFPS, na.rm = TRUE),
           meanTurb = sum(dailyMeanTurb, na.rm = TRUE),

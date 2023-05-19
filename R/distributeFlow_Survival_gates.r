@@ -49,13 +49,15 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
   for (i in c("RO", "Turb", "Spill", "FPS")) {
     # keep track of current structure
     structure <- tolower(i)
+    if (i == "FPS" && param_list$alt_desc$collector == "NONE") {
+      cat(paste0("No collector used, setting FPS survival to 0.\n"))
+      fish_distributed_outlets <- fish_distributed_outlets %>%
+        dplyr::mutate("{structure}_survival" := 0)
+      next
+    }
     # Select only the relevant reservoir data
     resv_data_sub <- resv_data[which(tolower(
       rownames(resv_data)) == structure), ]
-    stopifnot(
-      resv_data_sub$method %in% c("Equal Q", "Min Q to equal", "Unit to Max Q",
-        "Target Q", "Peaking Performance")
-    )
     if (structure != "fps" && tolower(resv_data_sub$normally_used) == "n") {
       cat(paste0("! Route ", i,
         " not normally used, setting survival rate = 0.\n"))
@@ -94,11 +96,21 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       fish_distributed_outlets <- fish_distributed_outlets %>%
         dplyr::mutate("{structure}_survival" := survival)
     } else { # here, use table-based approaches
+      # Addition: only stop the function if there is no gate method AND if there 
+      # is more than 1 gate. Previously, this stopped execution at the head of 
+      # the function.
+      if (resv_data_sub$n_gates > 1) {
+        # Check that a method has been provided
+        stopifnot(
+          resv_data_sub$n_gates > 1 &
+          resv_data_sub$method %in% c("Equal Q", "Min Q to equal", "Unit to Max Q",
+            "Target Q", "Peaking Performance")
+      )}
       # Pull out the survival by flow table
       surv_table <- data.frame(param_list[[paste0(structure, "_surv")]]) %>%
         dplyr::mutate(across(everything(), as.numeric))
       # Check if there is a gate method provided, if not quit.
-      if(is.na(resv_data_sub$gate_method)) {
+      if (is.na(resv_data_sub$gate_method)) {
         stop("No gate method provided.")
       } else {
         cat(paste0(".....gate method: ", resv_data_sub$gate_method, "\n"))
