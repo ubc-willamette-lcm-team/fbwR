@@ -69,8 +69,8 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     # that is being used based on the position of the "X" cell,
     dpe_column_name = c("baseline_dpe", "fsc_dpe", "fss_dpe", "weir_dpe")[
     #  yeesh
-      which(c(qset_subset$`...37`, qset_subset$`...38`,
-        qset_subset$`...39`, qset_subset$`...40`) == "X")
+      which(toupper(c(qset_subset$`...37`, qset_subset$`...38`,
+        qset_subset$`...39`, qset_subset$`...40`)) == "X")
     ],
     temp_dist = qset_subset$`Temp_Dist?`,
     fps_q_max = qset_subset$`Fish Passage Q`,

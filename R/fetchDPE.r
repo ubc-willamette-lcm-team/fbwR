@@ -38,29 +38,29 @@ fetchDPE <- function(ressim, param_list) {
     y = param_list$route_dpe$baseline_dpe,
     rule = 2)
   # now, fill in other details based on param_list
-  if (fps_type == "NONE") {
+  if (fps_type == "NONE" || is.na(param_list$alt_desc[["dpe_column_name"]]) || 
+    identical(param_list$alt_desc[["dpe_column_name"]], character(0))) {
     elevmin_FPS <- Inf # By making the minimum elevation infinite, only the
     # baseline will be applied
     elevmax_FPS <- -Inf
   } else {
     # If max elevation for the FPS is blank/empty, set to -Inf
-    # If the maximum elevation is -Inf, 
     elevmax_FPS <- ifelse(identical(param_list$fps_max_elev, numeric(0)),
       elevmax_FPS <- Inf,
-      elevmax_FPS <- param_list$fps_max_elev
+      elevmax_FPS <- as.numeric(param_list$fps_max_elev)
     )
+    # Same for min elevation
     elevmin_FPS <- ifelse(identical(param_list$fps_bottom_elev, numeric(0)),
       elevmin_FPS <- -Inf,
-      elevmin_FPS <- param_list$fps_bottom_elev
+      elevmin_FPS <- as.numeric(param_list$fps_bottom_elev)
     )
   }
   selected_dpe_col <- which(
     colnames(param_list$route_dpe) == param_list$alt_desc[["dpe_column_name"]])
   selected_dpe_interpolator <- stats::approxfun(
-      x = param_list$route_dpe$elev, 
+      x = param_list$route_dpe$elev,
       y = unlist(param_list$route_dpe[, selected_dpe_col]),
-      rule = 2
-    )
+      rule = 2)
   baseline_dpe <- baseline_linear_interpolator(ressim$elev)
   fps_dpe <- selected_dpe_interpolator(ressim$elev)
 
