@@ -73,7 +73,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
       #   withdrawn for temperature control
       # FSO is assumed to operate regardless of tempearture split.
       # If temperature controls are active, account for this:
-      if (tolower(param_list$alt_desc[["temp_dist"]]) == "y") {
+      if (tolower(param_list$alt_desc[["use_temp_dist"]]) == "y") {
         # if(is.null(param_list$water_year_types) | is.null(temp_splits)){
         #   stop('If using an FSS fish passage with temperature control, you must also supply "year_water_types", a data frame of water type by year in the ResSim data; and "temp_splits", a dataframe containing columns date, proportion of water taken from the FSS during cool/wet water years, the proportion taken during normal years, and the proportion taken during hot/dry years. ')
         # }

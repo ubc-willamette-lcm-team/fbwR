@@ -56,6 +56,12 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   qset_subset <- qset[seq(from = qset_range[1], to = qset_range[2], by = 1), ]
   stopifnot(!is.na(quickset) && quickset %in% qset_subset$`Quick Set Name`)
   qset_subset <- qset_subset[which(qset_subset$`Quick Set Name` == quickset), ]
+  # The column of route effectiveness to be used is indicated with an "X"
+  #   Find it
+  route_eff_x_column <- which(toupper(
+    c(qset_subset$`...37`, qset_subset$`...38`,
+        qset_subset$`...39`, qset_subset$`...40`)) == "X")
+  # if(identical(route_eff_x_column, character(0)))
   ### Build the output list, following template format
   ### ALT DESCRIPTION
   alt_desc_list <- list(
@@ -68,9 +74,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     # Lookup the name of the DPE column 
     # that is being used based on the position of the "X" cell,
     dpe_column_name = c("baseline_dpe", "fsc_dpe", "fss_dpe", "weir_dpe")[
-    #  yeesh
-      which(toupper(c(qset_subset$`...37`, qset_subset$`...38`,
-        qset_subset$`...39`, qset_subset$`...40`)) == "X")
+      route_eff_x_column
     ],
     temp_dist = qset_subset$`Temp_Dist?`,
     fps_q_max = qset_subset$`Fish Passage Q`,
