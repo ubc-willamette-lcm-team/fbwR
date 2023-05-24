@@ -15,8 +15,8 @@ loadFromTemplate <- function(template_file) {
       all(c(
         "alt_description", "route_specifications",
         "route_effectiveness", "route_dpe",
-        "monthly_runtiming", "ro_surv", "ro_elevs",
-        "turb_surv", "spill_surv", "fps_surv",
+        "monthly_runtiming", "ro_surv_table", "ro_elevs",
+        "turb_surv_table", "spill_surv_table", "fps_surv_table",
         "temp_dist", "water_year_types") %in%
         sheetnames)
   })
@@ -56,20 +56,20 @@ loadFromTemplate <- function(template_file) {
     sheet = "monthly_runtiming", skip = 5,
     na = character(), trim_ws = F, col_names = TRUE, col_types = c("date", 
       "numeric", "numeric"))
-  ro_surv <- readxl::read_excel(path = template_file,
-    sheet = "ro_surv", skip = 5,
+  ro_surv_table <- readxl::read_excel(path = template_file,
+    sheet = "ro_surv_table", skip = 5,
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
   ro_elevs <- readxl::read_excel(path = template_file,
     sheet = "ro_elevs", skip = 5,
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
-  turb_surv <- readxl::read_excel(path = template_file,
-    sheet = "turb_surv", skip = 5,
+  turb_surv_table <- readxl::read_excel(path = template_file,
+    sheet = "turb_surv_table", skip = 5,
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
-  spill_surv <- readxl::read_excel(path = template_file,
-    sheet = "spill_surv", skip = 5,
+  spill_surv_table <- readxl::read_excel(path = template_file,
+    sheet = "spill_surv_table", skip = 5,
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
-  fps_surv <- readxl::read_excel(path = template_file,
-    sheet = "fps_surv", skip = 5,
+  fps_surv_table <- readxl::read_excel(path = template_file,
+    sheet = "fps_surv_table", skip = 5,
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text")
   ## Still have to read in the temperature distribution data
   # Just include in the Excel file like FBW Excel heh
@@ -87,11 +87,11 @@ loadFromTemplate <- function(template_file) {
     "route_eff" = route_eff,
     "route_dpe" = route_dpe,
     "monthly_runtiming" = monthly_runtiming,
-    "ro_surv" = ro_surv,
+    "ro_surv_table" = ro_surv_table,
     "ro_elevs" = ro_elevs,
-    "turb_surv" = turb_surv,
-    "spill_surv" = spill_surv,
-    "fps_surv" = fps_surv,
+    "turb_surv_table" = turb_surv_table,
+    "spill_surv_table" = spill_surv_table,
+    "fps_surv_table" = fps_surv_table,
     "temp_dist" = temp_dist,
     "water_year_types" = water_year_types
   ))

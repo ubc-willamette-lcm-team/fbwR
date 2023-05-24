@@ -13,7 +13,7 @@
 #' following standard input format of Res-Sim spreadsheets.
 #' @param elevsheet  Name of Excel sheet containing ResSim results for pool
 #' elevation. If not provided, defaults to `NULL` and the function will use th
-#' first sheet ending in "-out"
+#' first sheet ending in "-"
 #' @param outflowsheet Name of Excel sheet containing ResSim results for flow
 #' through all outlets for each day in the period of record. If not provided,
 #' defaults to `NULL` and the function will use the first sheet ending in "-out"

@@ -107,7 +107,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
             "Target Q", "Peaking Performance")
       )}
       # Pull out the survival by flow table
-      surv_table <- data.frame(param_list[[paste0(structure, "_surv")]]) %>%
+      surv_table <- data.frame(param_list[[paste0(structure, "_surv_table")]]) %>%
         dplyr::mutate(across(everything(), as.numeric))
       # Check if there is a gate method provided, if not quit.
       if (is.na(resv_data_sub$gate_method)) {
@@ -120,7 +120,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       multioutlet <- ncol(surv_table) > 2
       if (multioutlet) {
         bottomElev <- as.numeric(param_list[[paste0(structure, "_elevs")]]$value)
-        if( length(bottomElev) != ncol(surv_table) - 1){
+        if (length(bottomElev) != ncol(surv_table) - 1) {
           stop(paste0(
             'The number of columns in the survival table does not match the number of elevations provided for ', structure, '.'
           ))
@@ -146,7 +146,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         # Create multi-outlet table
         mo_table <- as.data.frame(
           matrix(
-            NA, 
+            NA,
             # One for each day of the series
             nrow = nrow(fish_distributed_outlets),
             # Number of columns: flow, elevation, flow-based survival upper, flow-based survival lower
@@ -158,9 +158,9 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         # The "nonflow" column will be the survival rate
         nonflow <- which(colnames(surv_table) != "flow")
         survLinearInterp <- approxfun(
-          x=surv_table$flow,
-          y=surv_table[,nonflow],
-          rule=2
+          x = surv_table$flow,
+          y = surv_table[ , nonflow],
+          rule = 2
         )
       } # end of if multiOutlet() else linear
       # Flow distribution calculation
