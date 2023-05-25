@@ -183,8 +183,8 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
           "% Fish approaching", paste0("...", seq(24, 34, by = 1)))
       )]
     ))
-  # Survival
-  ro_surv <- na.omit(data.frame(
+  # Survival tables
+  ro_surv_table <- na.omit(data.frame(
     flow = as.numeric(unlist(resvsheet[
       (resvnames["RO Surv Q"] + 1):
       (resvnames["RO Low Pool Surv"] - 1),
@@ -207,7 +207,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
         which(colnames(resvsheet) == reservoir)]
       ))
   )
-  turb_surv <- na.omit(data.frame(
+  turb_surv_table <- na.omit(data.frame(
     flow = as.numeric(unlist(resvsheet[
       (resvnames["Turb Surv Q"] + 1):
       (resvnames["Turb Surv"] - 1),
@@ -217,7 +217,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       (resvnames["Spill Surv Q"] - 1),
       which(colnames(resvsheet) == reservoir)]))
   ))
-  spill_surv <- na.omit(data.frame(
+  spill_surv_table <- na.omit(data.frame(
     flow = as.numeric(unlist(resvsheet[
       (resvnames["Spill Surv Q"] + 1):
       (resvnames["Spill Surv"] - 1),
@@ -227,7 +227,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       (resvnames["FP Surv Q"] - 1),
       which(colnames(resvsheet) == reservoir)]))
   ))
-  fps_surv <- na.omit(data.frame(
+  fps_surv_table <- na.omit(data.frame(
     flow = as.numeric(unlist(resvsheet[
       (resvnames["FP Surv Q"] + 1):
       (resvnames["FP Surv"] - 1),
