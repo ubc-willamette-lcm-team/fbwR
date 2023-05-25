@@ -88,6 +88,76 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     weir_start_date = qset_subset$startWeirDate,
     weir_end_date = qset_subset$endWeirDate
   )
+  ### There may be differences between these values and those defined in the 
+  ###   Route Survival Model sheet
+  qset_rsm_alt <- t(readxl::read_excel(fbw_excel,
+    sheet = "Route Survival Model", range = "A11:B16", col_names = F))
+  qset_rsm_surv <- t(readxl::read_excel(fbw_excel,
+    sheet = "Route Survival Model", range = "A17:E25", col_names = F))
+  route_eff_x_column_eff <- readxl::read_excel(fbw_excel,
+    sheet = "Effectiveness", range = "J2:N2", col_names = F)
+  route_eff_x_idx <- which(toupper(route_eff_x_column_eff) == "X")
+  weir_dates <- as.vector(readxl::read_excel(fbw_excel,
+    sheet = "Route Survival Model", range = "G12:G13", col_names = FALSE, 
+    na = "NA"))
+  if (length(weir_dates) == 0) {
+    weir_dates <- list(NA, NA)
+  }
+  # Create parameter list
+  alt_desc_list_rsm <- list(
+    fps_alternative = qset_rsm_alt[2, 1],
+    nets = qset_rsm_alt[2, 2],
+    collector = qset_rsm_alt[2, 3], # Quickset
+    rereg = qset_rsm_alt[2, 4], # Quickset
+    rereg_mortality = readxl::read_excel(fbw_excel,
+      sheet = "Route Survival Model", range = "E14", col_names = F),
+    fish_with_flow = qset_rsm_alt[2, 5],
+    # Lookup the name of the DPE column 
+    # that is being used based on the position of the "X" cell,
+    dpe_column_name = c("baseline_dpe", "fsc_dpe", "fss_dpe", "weir_dpe")[
+      route_eff_x_idx
+    ],
+    temp_dist = qset_rsm_alt[2, 6],
+    # 
+    fps_q_max = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 2])),
+      as.numeric(qset_rsm_surv[5, 2]), qset_rsm_surv[5, 2]),
+    fps_bottom_elev = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 3])),
+      as.numeric(qset_rsm_surv[5, 3]), qset_rsm_surv[5, 3]),
+    fps_max_elev = NA,
+    ro_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[2, 4])),
+      as.numeric(qset_rsm_surv[2, 4]), qset_rsm_surv[2, 4]),
+    turb_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[3, 4])),
+      as.numeric(qset_rsm_surv[3, 4]), qset_rsm_surv[3, 4]),
+    spill_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[4, 4])),
+      as.numeric(qset_rsm_surv[4, 4]), qset_rsm_surv[4, 4]),
+    fps_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 4])),
+      as.numeric(qset_rsm_surv[5, 4]), qset_rsm_surv[5, 4]),
+    #!# Gotta do some weird date manipulation?
+    weir_start_date = weir_dates[[1]][1],
+    weir_end_date = weir_dates[[1]][2]
+  )
+  if(
+    !(alt_desc_list_rsm$fps_alternative == alt_desc_list$fps_alternative) ||
+    !(alt_desc_list_rsm$nets == alt_desc_list$nets) ||
+    !(alt_desc_list_rsm$collector == alt_desc_list$collector) ||
+    !(alt_desc_list_rsm$rereg == alt_desc_list$rereg) || 
+    !(alt_desc_list_rsm$rereg_mortality == alt_desc_list$rereg_mortality) || 
+    !(alt_desc_list_rsm$fish_with_flow == alt_desc_list$fish_with_flow) ||
+    !(alt_desc_list_rsm$dpe_column_name == alt_desc_list$dpe_column_name) ||
+    !(alt_desc_list_rsm$temp_dist == alt_desc_list$temp_dist) ||
+    !(alt_desc_list_rsm$fps_q_max == alt_desc_list$fps_q_max) || 
+    !(alt_desc_list_rsm$fps_bottom_elev == alt_desc_list$fps_bottom_elev) || 
+    !(alt_desc_list_rsm$fps_max_elev == alt_desc_list$fps_max_elev) ||
+    !(alt_desc_list_rsm$ro_surv == alt_desc_list$ro_surv) ||
+    !(alt_desc_list_rsm$turb_surv == alt_desc_list$turb_surv) ||
+    !(alt_desc_list_rsm$spill_surv == alt_desc_list$spill_surv) || 
+    !(alt_desc_list_rsm$fps_surv == alt_desc_list$fps_surv) || 
+    !(alt_desc_list_rsm$weir_start_date == alt_desc_list$weir_start_date) || 
+    !(alt_desc_list_rsm$weir_end_date == alt_desc_list$weir_end_date)
+  ) {
+    warning("Route specifications are mismatched between ResvData, QuickSets, and Route Survival Model sheets! Using values defined in the Route Survival Model.")
+    alt_desc_list <- alt_desc_list_rsm
+  }
   route_specs <- data.frame(
     # Add NA here, there is none for FPS YET!!! In quickset
     max_flow = c(as.numeric(unlist(resvsheet[8:10,
