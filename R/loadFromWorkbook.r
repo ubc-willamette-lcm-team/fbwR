@@ -35,9 +35,9 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
         sheet = "Route Survival Model", range = "B7")))),
     quickset)
   # Start reading in parameters
-  resvsheet <- readxl::read_excel(fbw_excel,
-    sheet = "ResvData")
-  qset <- suppressMessages(readxl::read_excel(fbw_excel, sheet = "QuickSets"))
+  resvsheet <- suppressMessages(readxl::read_excel(fbw_excel,
+    sheet = "ResvData"))
+  qset <- suppressWarnings(suppressMessages(readxl::read_excel(fbw_excel, sheet = "QuickSets")))
   stopifnot(reservoir %in% na.omit(unique(qset$Reservoir)))
   # Subset the quickset data rows to those which correspond to the reservoirs
   # Find those which are NOT empty: These are the breaks in rows between
@@ -90,16 +90,16 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   )
   ### There may be differences between these values and those defined in the 
   ###   Route Survival Model sheet
-  qset_rsm_alt <- t(readxl::read_excel(fbw_excel,
-    sheet = "Route Survival Model", range = "A11:B16", col_names = F))
-  qset_rsm_surv <- t(readxl::read_excel(fbw_excel,
-    sheet = "Route Survival Model", range = "A17:E25", col_names = F))
-  route_eff_x_column_eff <- readxl::read_excel(fbw_excel,
-    sheet = "Effectiveness", range = "J2:N2", col_names = F)
+  qset_rsm_alt <- t(suppressMessages(readxl::read_excel(fbw_excel,
+    sheet = "Route Survival Model", range = "A11:B16", col_names = F)))
+  qset_rsm_surv <- t(suppressMessages(readxl::read_excel(fbw_excel,
+    sheet = "Route Survival Model", range = "A17:E25", col_names = F)))
+  route_eff_x_column_eff <- suppressMessages(readxl::read_excel(fbw_excel,
+    sheet = "Effectiveness", range = "K2:N2", col_names = F))
   route_eff_x_idx <- which(toupper(route_eff_x_column_eff) == "X")
-  weir_dates <- as.vector(readxl::read_excel(fbw_excel,
+  weir_dates <- as.vector(suppressMessages(readxl::read_excel(fbw_excel,
     sheet = "Route Survival Model", range = "G12:G13", col_names = FALSE, 
-    na = "NA"))
+    na = "NA")))
   if (length(weir_dates) == 0) {
     weir_dates <- list(NA, NA)
   }
@@ -109,8 +109,8 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     nets = qset_rsm_alt[2, 2],
     collector = qset_rsm_alt[2, 3], # Quickset
     rereg = qset_rsm_alt[2, 4], # Quickset
-    rereg_mortality = readxl::read_excel(fbw_excel,
-      sheet = "Route Survival Model", range = "E14", col_names = F),
+    rereg_mortality = suppressMessages(readxl::read_excel(fbw_excel,
+      sheet = "Route Survival Model", range = "E14", col_names = F)),
     fish_with_flow = qset_rsm_alt[2, 5],
     # Lookup the name of the DPE column 
     # that is being used based on the position of the "X" cell,
@@ -158,6 +158,15 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     warning("Route specifications are mismatched between ResvData, QuickSets, and Route Survival Model sheets! Using values defined in the Route Survival Model.")
     alt_desc_list <- alt_desc_list_rsm
   }
+  resv_normallyused <- c(unlist(resvsheet[31:34,
+    which(colnames(resvsheet) == reservoir)]))
+  rsm_normallyused <- qset_rsm_surv[2:5, 9]
+  if(!all(resv_normallyused == rsm_normallyused, na.rm = T)) {
+    warning("'Normally used' specifications are mismatched between ResvData and Route Survival Model sheets! Using values defined in the Route Survival Model.")
+    normally_used_check <- rsm_normallyused
+  } else {
+    normally_used_check <- resv_normallyused
+  }
   route_specs <- data.frame(
     # Add NA here, there is none for FPS YET!!! In quickset
     max_flow = c(as.numeric(unlist(resvsheet[8:10,
@@ -173,8 +182,9 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       which(colnames(resvsheet) == reservoir)])),
     target_flow = as.numeric(unlist(resvsheet[26:29,
       which(colnames(resvsheet) == reservoir)])),
-    normally_used = c(unlist(resvsheet[31:33,
-      which(colnames(resvsheet) == reservoir)]), NA),
+    normally_used = normally_used_check,
+    # c(unlist(resvsheet[31:33,
+    #   which(colnames(resvsheet) == reservoir)]), NA),
     gate_method = c(
       qset_subset$`Gate_Method_RO`,
       qset_subset$`Gate_Method_Turb`,
@@ -238,8 +248,8 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       which(colnames(resvsheet) == reservoir)]))
   )
   ### DPE from the Effectiveness tab
-  effsheet <- readxl::read_excel(fbw_excel,
-    sheet = "Effectiveness", range = "G2:N16")
+  effsheet <- suppressMessages(readxl::read_excel(fbw_excel,
+    sheet = "Effectiveness", range = "G2:N16"))
   route_dpe_eff <- data.frame(
     elev = effsheet$`Elevs.`,
     elev_description = effsheet$Descriptions,
@@ -275,8 +285,8 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       )]
     ))
   ### Fish approaching FROM the Route Survival Model tab
-  rsm_timing <-  readxl::read_excel(fbw_excel,
-    sheet = "Route Survival Model", range = "A36:E48", col_names = T)
+  rsm_timing <-  suppressMessages(readxl::read_excel(fbw_excel,
+    sheet = "Route Survival Model", range = "A36:E48", col_names = T))
   monthly_runtiming_rsm <- data.frame(rsm_timing %>%
     rename(
       Date = Month,
