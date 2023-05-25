@@ -34,7 +34,6 @@ distributeFishDaily <- function(ressim, param_list, verbose = FALSE) {
     # First, calculate days in month as days_in_month column
     mutate(
       days_in_month = lubridate::days_in_month(Date))
-
   leap_dates <- which(day(ressim$Date) == 29 & month(ressim$Date) == 2)
   if (identical(leap_dates, integer(0))) {
     message("No instances of February 29 in the ResSim dataset, so leap years will be ignored. Only dates up to February 28th will be included in FBW.")
@@ -55,11 +54,10 @@ distributeFishDaily <- function(ressim, param_list, verbose = FALSE) {
       MonthlyQ_total = sum(outflow_flow)
     ) %>%
     ungroup()
-
-  if (param_list$alt_desc[["fps_alternative"]] == "Y") {
   # Fish passage structures change the monthly run timing, so if there is
   #   an alternative in place (according to param_list$alt_desc), use the 
   #   alternative run timing
+  if (param_list$alt_desc[["fps_alternative"]] == "Y") {
     fish_approaching <- data.frame(
       # Convert the date column into month only (instead of dyt format)
       Month = lubridate::month(param_list$monthly_runtiming$Date,
