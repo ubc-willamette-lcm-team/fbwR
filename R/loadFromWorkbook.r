@@ -125,7 +125,8 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   # DPE range includes some number of elevation inputs
   resvnames <- which(!is.na(resvsheet$`Raw Data Sheet Names`))
   names(resvnames) <- resvsheet$`Raw Data Sheet Names`[resvnames]
-  dpe_idx <- list(
+  # Index of the rows where dpe data "live" in the ResV sheet
+  dpe_idx_resv <- list(
     elev = c(
       resvnames[which(names(resvnames) == "Resv. Elevs.")] + 1,
       resvnames[which(names(resvnames) == "Elev. Description")] - 1),
@@ -145,32 +146,52 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       resvnames[which(names(resvnames) == "Weir Box Dam Passage")] + 1,
       resvnames[which(names(resvnames) == "Baseline RE")] - 2)
     )
-  route_dpe <- data.frame(
+  route_dpe_resv <- data.frame(
     # Index the sheet according to the indices generated above
     elev = as.numeric(unlist(resvsheet[
-      dpe_idx$elev[1]:dpe_idx$elev[2],
+      dpe_idx_resv$elev[1]:dpe_idx_resv$elev[2],
       which(colnames(resvsheet) == reservoir)])),
     elev_description = unlist(resvsheet[
-      dpe_idx$elev_desc[1]:dpe_idx$elev_desc[2],
+      dpe_idx_resv$elev_desc[1]:dpe_idx_resv$elev_desc[2],
       which(colnames(resvsheet) == reservoir)]),
     baseline_dpe = as.numeric(unlist(resvsheet[
-      dpe_idx$baseline_dpe[1]:dpe_idx$baseline_dpe[2],
+      dpe_idx_resv$baseline_dpe[1]:dpe_idx_resv$baseline_dpe[2],
       which(colnames(resvsheet) == reservoir)])),
     fss_dpe = as.numeric(unlist(resvsheet[
-      dpe_idx$fss_dpe[1]:dpe_idx$fss_dpe[2],
+      dpe_idx_resv$fss_dpe[1]:dpe_idx_resv$fss_dpe[2],
       which(colnames(resvsheet) == reservoir)])),
     fsc_dpe = as.numeric(unlist(resvsheet[
-      dpe_idx$fsc_dpe[1]:dpe_idx$fsc_dpe[2],
+      dpe_idx_resv$fsc_dpe[1]:dpe_idx_resv$fsc_dpe[2],
       which(colnames(resvsheet) == reservoir)])),
     weir_dpe = as.numeric(unlist(resvsheet[
-      dpe_idx$weir_dpe[1]:dpe_idx$weir_dpe[2],
+      dpe_idx_resv$weir_dpe[1]:dpe_idx_resv$weir_dpe[2],
       which(colnames(resvsheet) == reservoir)]))
   )
+  ### DPE from the Effectiveness tab
+  effsheet <- readxl::read_excel(fbw_excel,
+    sheet = "Effectiveness", range = "G2:N16")
+  route_dpe_eff <- data.frame(
+    elev = effsheet$`Elevs.`,
+    elev_description = effsheet$Descriptions,
+    baseline_dpe = effsheet[, 5],
+    fss_dpe = effsheet[, 6],
+    fsc_dpe = effsheet[, 7],
+    weir_dpe = effsheet[, 8]
+  )
+  colnames(route_dpe_eff) <- c("elev", "elev_description", "baseline_dpe",
+    "fss_dpe", "fsc_dpe", "weir_dpe")
+  if( !identical(route_dpe_eff$baseline_dpe, route_dpe_resv$baseline_dpe) ||
+    !identical(route_dpe_eff$fss_dpe, route_dpe_resv$fss_dpe) ||
+    !identical(route_dpe_eff$fsc_dpe, route_dpe_resv$fsc_dpe) ||
+    !identical(route_dpe_eff$weir_dpe, route_dpe_resv$weir_dpe)
+  ) {
+    warning("Route DPE mismatches between ResvData and Effectiveness tabs! Using values defined in the Route Effectiveness sheet.")
+  }
   ### Fish approaching
   fishapproach_idx <- c(
     resvnames[which(names(resvnames) == "Baseline Fish approaching")] + 1,
     resvnames[which(names(resvnames) == "Route Effectiveness Spillway")] - 1)
-  monthly_runtiming <- data.frame(
+  monthly_runtiming_resv <- data.frame(
     Date = as.Date(as.numeric(resvsheet[
       fishapproach_idx[1]:fishapproach_idx[2], ]$`Raw Data Sheet Names`),
       origin = "1899-12-30"),
@@ -183,6 +204,21 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
           "% Fish approaching", paste0("...", seq(24, 34, by = 1)))
       )]
     ))
+  ### Fish approaching FROM the Route Survival Model tab
+  rsm_timing <-  readxl::read_excel(fbw_excel,
+    sheet = "Route Survival Model", range = "A36:E48", col_names = T)
+  monthly_runtiming_rsm <- data.frame(rsm_timing %>%
+    rename(
+      Date = Month,
+      approaching_baseline = Baseline1,
+      approaching_alternative = `Estimated with Downstream Passage2`
+    ) %>%
+    select(Date, approaching_baseline, approaching_alternative))
+  if( !identical(monthly_runtiming_rsm$approaching_baseline, monthly_runtiming_resv$approaching_baseline) ||
+    !identical(monthly_runtiming_rsm$approaching_alternative, monthly_runtiming_resv$approaching_alternative)
+  ) {
+    warning("Monthly run timing mismatches between ResvData and Route Survival Model sheets! Using values defined in the Route Survival Model sheet.")
+  }
   # Survival tables
   ro_surv_table <- na.omit(data.frame(
     flow = as.numeric(unlist(resvsheet[
@@ -286,17 +322,17 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     select(-c(coolwet, normal, hotdry))
   }
   # Compile into named list
-  params <- list(
+  list(
     "alt_desc" = alt_desc_list,
     "route_specs" = route_specs,
     "route_eff" = route_eff,
-    "route_dpe" = route_dpe,
-    "monthly_runtiming" = monthly_runtiming,
-    "ro_surv" = ro_surv,
+    "route_dpe" = route_dpe_eff,
+    "monthly_runtiming" = monthly_runtiming_rsm,
+    "ro_surv_table" = ro_surv_table,
     "ro_elevs" = ro_elevs,
-    "turb_surv" = turb_surv,
-    "fps_surv" = fps_surv,
-    "spill_surv" = spill_surv,
+    "turb_surv_table" = turb_surv_table,
+    "fps_surv_table" = fps_surv_table,
+    "spill_surv_table" = spill_surv_table,
     "temp_dist" = temp_dist,
     "water_year_types" = water_year_types,
     "reservoir" = reservoir,
