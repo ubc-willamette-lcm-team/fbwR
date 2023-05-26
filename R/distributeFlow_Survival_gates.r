@@ -50,7 +50,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
     # keep track of current structure
     structure <- tolower(i)
     if (i == "FPS" && param_list$alt_desc$collector == "NONE") {
-      cat(paste0("No collector used, setting FPS survival to 0.\n"))
+      message(paste0("No collector used, setting FPS survival to 0.\n"))
       fish_distributed_outlets <- fish_distributed_outlets %>%
         dplyr::mutate("{structure}_survival" := 0)
       next
@@ -59,17 +59,17 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
     resv_data_sub <- resv_data[which(tolower(
       rownames(resv_data)) == structure), ]
     if (structure != "fps" && tolower(resv_data_sub$normally_used) == "n") {
-      cat(paste0("! Route ", i,
-        " not normally used, setting survival rate = 0.\n"))
+      message(paste0("Route ", i,
+        " not normally used, setting survival rate = 0."))
       fish_distributed_outlets <- fish_distributed_outlets %>%
         dplyr::mutate("{structure}_survival" := 0)
       next # Move to the next iteration of i
     }
     # structure_surv indicates a point value or "table"
     structure_surv <- param_list$alt_desc[[paste0(structure, "_surv")]]
-    cat(paste0("\n...calculating survival for ", i, ": ", structure_surv,"\n"))
+    message(paste0("\n...calculating survival for ", i, ": ", structure_surv))
     if (length(structure_surv) == 0) { # if this returns 0, skip
-      cat(paste0("! No survival rates provided for ", structure,
+      warning(paste0("No survival rates provided for ", structure,
         ", assuming 0 and skipping."))
       fish_distributed_outlets <- fish_distributed_outlets %>%
         dplyr::mutate("{structure}_survival" := 0)
@@ -112,8 +112,9 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       # Check if there is a gate method provided, if not quit.
       if (is.na(resv_data_sub$gate_method)) {
         stop("No gate method provided.")
-      } else {
-        cat(paste0(".....gate method: ", resv_data_sub$gate_method, "\n"))
+      } 
+      else {
+        message(paste0(".....gate method: ", resv_data_sub$gate_method))
       }
       # Check if it is multi-outlet - this is typical for ROs
       # Are there 3+ columns in the survival table? Yes -> multi-outlet
@@ -126,7 +127,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           ))
         }
         nOutlet <- ncol(surv_table) - 1
-        cat(paste0(
+        message(paste0(
           '...Assuming ', nOutlet, 
             ' outlets to distribute through gates (based on the number of columns in the survival table and entries in ', 
             paste0(structure, "_elevs"), ') \n'))
@@ -401,7 +402,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         } else {
           survMinFlow <- survLinearInterp(min_flow)
         }
-        cat(".....Please wait...peaking performance takes a few moments to calculate...")
+        message(".....Please wait...peaking performance takes a moment to calculate...")
         # flow_weighted_survival <- c()
         volLeft_o <- flowData_tmp * 24 # Convert to cfs per hour
         # Remove the minimum flow/gate * 24h * number of active gates
