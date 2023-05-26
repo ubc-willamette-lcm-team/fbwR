@@ -79,27 +79,13 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
     # according to a table, use that point value.
     if (!is.na(structure_surv) && tolower(structure_surv) != "table") {
       structure_surv <- as.numeric(structure_surv)
-      # # If reregulating and if we are not currently in the fish passage,
-      # #   apply rergulating mortality in addition to the point value mortality
-      # #   provided in the quickset_data
-      # if (tolower(param_list$alt_desc[["rereg"]]) == "y" && i != "FPS") {
-      #   survival <- structure_surv * (1 - as.numeric(
-      #     param_list$alt_desc[["rereg_mortality"]]))
-      # # Otherwise, if in the fish passage structure and it's the FSO type,
-      # #   apply this mortality
-      # } else if(tolower(param_list$alt_desc[["rereg"]]) == "y" && 
-      #   i == "FPS" && param_list$alt_desc[["collector"]] == "FSO"){
-      #   survival <- structure_surv * (1 - as.numeric(
-      #     param_list$alt_desc[["rereg_mortality"]]))
-      # } else { # Otherwise (if FP is not FSO) or non-rereg cases:
-      #   survival <- structure_surv
-      # }
       # Create a new column based on the current structures' survival rate
       fish_distributed_outlets <- fish_distributed_outlets %>%
         dplyr::mutate("{structure}_survival" := structure_surv)
     } else if (is.na(structure_surv)) { # here, use table-based approaches
       warning(paste0("Survival rate through ", " is NA!!"))
-      survival <- NA
+      fish_distributed_outlets <- fish_distributed_outlets %>%
+        dplyr::mutate("{structure}_survival" := NA)
     } else {
       # If there is no gate method AND if there is more than 1 gate, stop 
       # Previously, this stopped execution at the head of the function
@@ -229,7 +215,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
             weighted_survival,
             # Track weighted survival between gates this way
             weighted_survival + (newflow * 
-              (1 / ifelse(flowData_tmp == 0, Inf, 
+              (1 / ifelse(flowData_tmp == 0, Inf,
                 flowData_tmp)) * nearestSurv)
           )
           # weighted_survival <- weighted_survival+(newflow*(1/ifelse(flowData_tmp==0,Inf,flowData_tmp))*nearestSurv)
@@ -287,7 +273,6 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           varname_flow <- paste0(structure, "_flow_gate", g)
           varname_surv <- paste0(structure, "_surv_gate", g)
           # Here, set all flows > max to the maximum value
-          ### This line is creating lists
           newflow <- pmin(data.frame(remaining_flow)[, 1], max_flow)
           # Create a new column in the output df
           fish_distributed_outlets <- dplyr::mutate(fish_distributed_outlets,
@@ -315,9 +300,14 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           weighted_survival <- ifelse(
             is.na(nearestSurv),
             weighted_survival,
+
+
+            
             # Here, have to use an ifelse to avoid dividing by 0
             weighted_survival + (newflow * (1 / ifelse(
               flowData_tmp == 0, Inf, flowData_tmp)) * nearestSurv)
+
+
           )
         }
         fish_distributed_outlets <- fish_distributed_outlets %>%
