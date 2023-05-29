@@ -82,11 +82,12 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       # Create a new column based on the current structures' survival rate
       fish_distributed_outlets <- fish_distributed_outlets %>%
         dplyr::mutate("{structure}_survival" := structure_surv)
-    } else if (is.na(structure_surv)) { # here, use table-based approaches
+    } else if (is.na(structure_surv)) {
       warning(paste0("Survival rate through ", " is NA!!"))
       fish_distributed_outlets <- fish_distributed_outlets %>%
         dplyr::mutate("{structure}_survival" := NA)
     } else {
+      ### USE TABLE BASED APPROACHES BELOW
       # If there is no gate method AND if there is more than 1 gate, stop 
       # Previously, this stopped execution at the head of the function
       if (resv_data_sub$n_gates > 1) {
@@ -223,12 +224,13 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         fish_distributed_outlets <- fish_distributed_outlets %>% 
           dplyr::mutate("{structure}_survival" := weighted_survival)
           # mutate(flow_weighted_survival = weighted_survival)
-      } else if(resv_data_sub$gate_method == "Min Q to equal") {
-        weighted_survival <- 0
+      } else if (resv_data_sub$gate_method == "Min Q to equal") {
         min_flow <- resv_data_sub$min_flow
         if (is.na(min_flow)) {
-          stop(paste0("No minimum flow provided for outlet ", structure))
+          stop(paste0("No minimum flow rate set for ", structure, 
+            ", but 'Min Q to equal' method selected. Exiting."))
         }
+        weighted_survival <- 0
         # VBA revision here: treat the gates differently
         fish_distributed_outlets <- fish_distributed_outlets %>%
           dplyr::mutate(realized_gates = pmin(floor(
@@ -265,8 +267,12 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           )
         }
       } else if (resv_data_sub$gate_method == "Unit to Max Q") {
-        weighted_survival <- 0
         max_flow <- resv_data_sub$max_flow
+        if (is.na(max_flow)) {
+          stop(paste0("No maximum flow rate set for ", structure, 
+            ", but 'Unit to Max Q' method selected. Exiting."))
+        }
+        weighted_survival <- 0
         # Have to count down with flow
         remaining_flow <- flowData_tmp
         for (g in 1:gates) {
@@ -301,12 +307,9 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
             is.na(nearestSurv),
             weighted_survival,
 
-
-            
             # Here, have to use an ifelse to avoid dividing by 0
             weighted_survival + (newflow * (1 / ifelse(
               flowData_tmp == 0, Inf, flowData_tmp)) * nearestSurv)
-
 
           )
         }
@@ -315,6 +318,10 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       } else if (resv_data_sub$gate_method == "Target Q") {
         # If outlet flow is greater than target*gates:
         target_flow <- resv_data_sub$target_flow
+        if (is.na(target_flow)) {
+          stop(paste0("No target flow set for ", structure, 
+            ", but 'Target Q' method selected. Exiting."))
+        }
         ngates <- resv_data_sub$n_gates
         fish_distributed_outlets <- fish_distributed_outlets %>%
           dplyr::mutate(
@@ -366,7 +373,17 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           }
       } else if (resv_data_sub$gate_method == "Peaking Performance") {
         min_flow <- resv_data_sub$min_flow
+        if (is.na(min_flow)) {
+          warning(paste0("No minimum flow rate given for ", structure, 
+            "; assuming no minimum flow rate (i.e., minimum = 0)."))
+          min_flow <- 0
+        }
         max_flow <- resv_data_sub$max_flow
+        if (is.na(max_flow)) {
+          warning(paste0("No maximum flow rate given for ", structure, 
+            "; assuming no maximum flow rate (i.e., maximum = infinite)."))
+          max_flow <- Inf
+        }
         ngates <- resv_data_sub$n_gates
         if (min_flow == 0) {
           realized_gates <- ngates
@@ -481,7 +498,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       fish_distributed_outlets <- fish_distributed_outlets %>%
         # Rename the current survival column to "pre_rereg" for clarity
         dplyr::rename(
-          !!paste0(structure, "_survival_pre_rereg") := !! sym(paste0(structure, 
+          !!paste0(structure, "_survival_pre_rereg") := !! sym(paste0(structure,
             "_survival"))) %>%
         # Now apply rereg mortality
         dplyr::mutate("{structure}_survival" := 
@@ -489,12 +506,12 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         param_list$alt_desc[["rereg_mortality"]])))
     # Otherwise, if in the fish passage structure and it's the FSO type,
     #   apply this mortality
-    } else if(tolower(param_list$alt_desc[["rereg"]]) == "y" && 
-      i == "FPS" && param_list$alt_desc[["collector"]] == "FSO"){
+    } else if (tolower(param_list$alt_desc[["rereg"]]) == "y" && 
+      i == "FPS" && param_list$alt_desc[["collector"]] == "FSO") {
       fish_distributed_outlets <- fish_distributed_outlets %>%
         # Rename the current survival column to "pre_rereg" for clarity
         dplyr::rename(
-          !!paste0(structure, "_survival_pre_rereg") := !! sym(paste0(structure, 
+          !!paste0(structure, "_survival_pre_rereg") := !! sym(paste0(structure,
             "_survival"))) %>%
         # Now apply rereg mortality
         dplyr::mutate("{structure}_survival" := 
