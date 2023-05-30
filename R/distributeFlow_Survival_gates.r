@@ -103,12 +103,12 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         dplyr::mutate(across(everything(), as.numeric))
       # Check if there is a gate method provided, if not quit.
       if (is.na(resv_data_sub$gate_method)) {
-        stop("No gate method provided.")
+        stop(paste0("No gate method provided for ", structure))
       } else {
         message(paste0(".....gate method: ", resv_data_sub$gate_method))
       }
       # Check if it is multi-elev - this is typical for ROs
-      # Are there 3+ columns in the survival table? Yes -> multi-elev
+      # Are there >2 columns in the survival table? Yes -> multi-elev
       multielev <- ncol(surv_table) > 2
       if (multielev) {
         bottomElev <- as.numeric(param_list[[paste0(structure, "_elevs")]]$value)
@@ -330,8 +330,11 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
               # If flow data is more than can be handled,
               # set to max number of gates
               flowData_tmp > (target_flow * ngates) ~ ngates,
-              # Otherwise, if there are two gates use only one
-              ngates == 2 ~ 1,
+              # Otherwise, if there are 2 gates, use only 1
+              ### MDeith: This step is in the original VBA code for FBW; the 
+              ### logic isn't clear to me. But when condition 1 is not met, 
+              ### and the number of gates is 2, use 1 gate. 
+              flowData_tmp <= (target_flow * ngates) & ngates == 2 ~ 1,
               # Otherwise, the catch-all final case (indicated with TRUE ~ )
               # is outlet flow divided by target flow
               TRUE ~ ceiling(flowData / target_flow)
