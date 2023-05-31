@@ -65,7 +65,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   ### Build the output list, following template format
   ### ALT DESCRIPTION
   alt_desc_list <- list(
-    fps_alternative = qset_subset$`Fish Passage Alt`,
+    fp_alternative = qset_subset$`Fish Passage Alt`,
     nets = qset_subset$`Nets`,
     collector = qset_subset$`Collector`, # Quickset
     rereg = qset_subset$`Rereg?`, # Quickset
@@ -105,7 +105,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   }
   # Create parameter list
   alt_desc_list_rsm <- list(
-    fps_alternative = qset_rsm_alt[2, 1],
+    fp_alternative = qset_rsm_alt[2, 1],
     nets = qset_rsm_alt[2, 2],
     collector = qset_rsm_alt[2, 3], # Quickset
     rereg = qset_rsm_alt[2, 4], # Quickset
@@ -137,7 +137,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     weir_end_date = weir_dates[[1]][2]
   )
   if(
-    !(alt_desc_list_rsm$fps_alternative == alt_desc_list$fps_alternative) ||
+    !(alt_desc_list_rsm$fp_alternative == alt_desc_list$fp_alternative) ||
     !(alt_desc_list_rsm$nets == alt_desc_list$nets) ||
     !(alt_desc_list_rsm$collector == alt_desc_list$collector) ||
     !(alt_desc_list_rsm$rereg == alt_desc_list$rereg) || 
