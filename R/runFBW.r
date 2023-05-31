@@ -42,13 +42,15 @@ runFBW <- function(template_file = NULL, param_list = NULL,
   }
   # Distribute fish population into daily passing populations
   fish_daily <- data.frame(distributeFishDaily(ressim,
-    param_list = param_list, verbose = verbose))
+      param_list = param_list, verbose = verbose))
   # Calculate DPE
-  dpe <- fetchDPE(fish_daily, param_list = param_list)
-  # Multiply approaching population by dam passage efficiency
-  fish_daily$approaching_daily_postDPE <- dpe$dam_passage *
-    fish_daily$approaching_daily
-  fish_distributed <- distributeFish_outlets(fish_postDPE = fish_daily,
+  fish_daily_postDPE <- fish_daily %>%
+    mutate(
+      dpe = fetchDPE(fish_daily, param_list = param_list)$dam_passage_efficiency,
+      # Multiply approaching population by dam passage efficiency
+      approaching_daily_postDPE = approaching_daily * dpe
+    )
+  fish_distributed <- distributeFish_outlets(fish_postDPE = fish_daily_postDPE,
     param_list = param_list, verbose = verbose)
   # Calculate survival rates from flow data, including distribution of fish 
   #   through gates in multi-gate outlets
@@ -69,6 +71,6 @@ runFBW <- function(template_file = NULL, param_list = NULL,
     if (summarize == FALSE) {
       return(fish_passage_survival)
     } else {
-      return(summarizeFBW(fish_passage_survival))
+      return(summarizeFBW(fish_passage_survival, param_list))
     }
 }
