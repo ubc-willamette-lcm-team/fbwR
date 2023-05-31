@@ -121,7 +121,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         message(paste0(
           '...Assuming ', nElevs,
             ' outlets in ', structure, ' based on the number of columns in "', structure, '_surv_table" and entries in ', 
-            paste0(structure, "_elevs"), ') \n'))
+            paste0(structure, "_elevs"), '\n'))
         # First, create a linear interpolation of gateflow vs. survival table column 1; repeat for each column after column #2
         # Create an empty vector, interpolated_survivals, to fill in a loop
         survInterp_multi <- c()
