@@ -65,25 +65,27 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   ### Build the output list, following template format
   ### ALT DESCRIPTION
   alt_desc_list <- list(
+    scenario_name = qset_subset$`Quick Set Name`,
+    scenario_description = qset_subset$`Description`,
     fp_alternative = qset_subset$`Fish Passage Alt`,
     nets = qset_subset$`Nets`,
     collector = qset_subset$`Collector`, # Quickset
+    fps_max_elev = qset_subset$`topElevFP`,
     rereg = qset_subset$`Rereg?`, # Quickset
     rereg_mortality = qset_subset$`Rereg Mort.`,
     fish_with_flow = qset_subset$`Fish w Flow`,
     # Lookup the name of the DPE column 
     # that is being used based on the position of the "X" cell,
-    dpe_column_name = c("baseline_dpe", "fsc_dpe", "fss_dpe", "weir_dpe")[
+    use_temp_dist = qset_subset$`Temp_Dist?`,
+    dpe_column_name = c("baseline_dpe", "col1_dpe", "col2_dpe", "col3_dpe")[
       route_eff_x_column
     ],
-    use_temp_dist = qset_subset$`Temp_Dist?`,
-    fps_q_max = qset_subset$`Fish Passage Q`,
-    fps_bottom_elev = qset_subset$`Fish Pass bottom`,
-    fps_max_elev = qset_subset$`topElevFP`,
-    ro_surv = tolower(qset_subset$`Surv_RO`),
-    turb_surv = tolower(qset_subset$`Surv_Turb`),
-    spill_surv = tolower(qset_subset$`Surv_Spill`),
-    fps_surv = tolower(qset_subset$`Surv_FP`),
+    # fps_q_max = qset_subset$`Fish Passage Q`,
+    # fps_bottom_elev = qset_subset$`Fish Pass bottom`,
+    # ro_surv = tolower(qset_subset$`Surv_RO`),
+    # turb_surv = tolower(qset_subset$`Surv_Turb`),
+    # spill_surv = tolower(qset_subset$`Surv_Spill`),
+    # fps_surv = tolower(qset_subset$`Surv_FP`),
     #!# Gotta do some weird date manipulation?
     weir_start_date = qset_subset$startWeirDate,
     weir_end_date = qset_subset$endWeirDate
@@ -114,7 +116,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     fish_with_flow = qset_rsm_alt[2, 5],
     # Lookup the name of the DPE column 
     # that is being used based on the position of the "X" cell,
-    dpe_column_name = c("baseline_dpe", "fsc_dpe", "fss_dpe", "weir_dpe")[
+    dpe_column_name = c("baseline_dpe", "col1_dpe", "col2_dpe", "col3_dpe")[
       route_eff_x_idx
     ],
     use_temp_dist = qset_rsm_alt[2, 6],
@@ -204,6 +206,10 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     q_ratio = seq(0, 1, by = 0.1),
     Spill = as.numeric(unlist(resvsheet[48:58,
       which(colnames(resvsheet) == reservoir)])),
+    `Fish Pass` = as.numeric(unlist(
+      qset_subset[which(colnames(qset_subset) == "Route Effectiveness nums"):
+        (which(colnames(qset_subset) == "Route Effectiveness nums") + 10)]
+    )),
     RO = as.numeric(unlist(resvsheet[60:70,
       which(colnames(resvsheet) == reservoir)])),
     Turb = as.numeric(unlist(resvsheet[72:82,
@@ -223,13 +229,13 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     baseline_dpe = c(
       resvnames[which(names(resvnames) == "Baseline Dam Passage")] + 1,
       resvnames[which(names(resvnames) == "FSS Dam Passage")] - 1),
-    fss_dpe = c(
+    col1_dpe = c(
       resvnames[which(names(resvnames) == "FSS Dam Passage")] + 1,
       resvnames[which(names(resvnames) == "FSC Dam Passage")] - 1),
-    fsc_dpe = c(
+    col2_dpe = c(
       resvnames[which(names(resvnames) == "FSC Dam Passage")] + 1,
       resvnames[which(names(resvnames) == "Weir Box Dam Passage")] - 1),
-    weir_dpe = c(
+    col3_dpe = c(
       resvnames[which(names(resvnames) == "Weir Box Dam Passage")] + 1,
       resvnames[which(names(resvnames) == "Baseline RE")] - 2)
     )
@@ -244,14 +250,14 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     baseline_dpe = as.numeric(unlist(resvsheet[
       dpe_idx_resv$baseline_dpe[1]:dpe_idx_resv$baseline_dpe[2],
       which(colnames(resvsheet) == reservoir)])),
-    fss_dpe = as.numeric(unlist(resvsheet[
-      dpe_idx_resv$fss_dpe[1]:dpe_idx_resv$fss_dpe[2],
+    col1_dpe = as.numeric(unlist(resvsheet[
+      dpe_idx_resv$col1_dpe[1]:dpe_idx_resv$col1_dpe[2],
       which(colnames(resvsheet) == reservoir)])),
-    fsc_dpe = as.numeric(unlist(resvsheet[
-      dpe_idx_resv$fsc_dpe[1]:dpe_idx_resv$fsc_dpe[2],
+    col2_dpe = as.numeric(unlist(resvsheet[
+      dpe_idx_resv$col2_dpe[1]:dpe_idx_resv$col2_dpe[2],
       which(colnames(resvsheet) == reservoir)])),
-    weir_dpe = as.numeric(unlist(resvsheet[
-      dpe_idx_resv$weir_dpe[1]:dpe_idx_resv$weir_dpe[2],
+    col3_dpe = as.numeric(unlist(resvsheet[
+      dpe_idx_resv$col3_dpe[1]:dpe_idx_resv$col3_dpe[2],
       which(colnames(resvsheet) == reservoir)]))
   )
   ### DPE from the Effectiveness tab
@@ -261,16 +267,16 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     elev = effsheet$`Elevs.`,
     elev_description = effsheet$Descriptions,
     baseline_dpe = effsheet[, 5],
-    fss_dpe = effsheet[, 6],
-    fsc_dpe = effsheet[, 7],
-    weir_dpe = effsheet[, 8]
+    col1_dpe = effsheet[, 6],
+    col2_dpe = effsheet[, 7],
+    col3_dpe = effsheet[, 8]
   )
   colnames(route_dpe_eff) <- c("elev", "elev_description", "baseline_dpe",
-    "fss_dpe", "fsc_dpe", "weir_dpe")
+    "col1_dpe", "col2_dpe", "col3_dpe")
   if( !identical(route_dpe_eff$baseline_dpe, route_dpe_resv$baseline_dpe) ||
-    !identical(route_dpe_eff$fss_dpe, route_dpe_resv$fss_dpe) ||
-    !identical(route_dpe_eff$fsc_dpe, route_dpe_resv$fsc_dpe) ||
-    !identical(route_dpe_eff$weir_dpe, route_dpe_resv$weir_dpe)
+    !identical(route_dpe_eff$col1_dpe, route_dpe_resv$col1_dpe) ||
+    !identical(route_dpe_eff$col2_dpe, route_dpe_resv$col2_dpe) ||
+    !identical(route_dpe_eff$col3_dpe, route_dpe_resv$col3_dpe)
   ) {
     warning("Route DPE mismatches between ResvData and Effectiveness tabs! Using values defined in the Route Effectiveness sheet.")
   }
