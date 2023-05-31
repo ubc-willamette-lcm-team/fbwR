@@ -121,19 +121,19 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     ],
     use_temp_dist = qset_rsm_alt[2, 6],
     # 
-    fps_q_max = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 2])),
-      as.numeric(qset_rsm_surv[5, 2]), qset_rsm_surv[5, 2]),
-    fps_bottom_elev = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 3])),
-      as.numeric(qset_rsm_surv[5, 3]), qset_rsm_surv[5, 3]),
+    # # fps_q_max = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 2])),
+    # #   as.numeric(qset_rsm_surv[5, 2]), qset_rsm_surv[5, 2]),
+    # fps_bottom_elev = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 3])),
+    #   as.numeric(qset_rsm_surv[5, 3]), qset_rsm_surv[5, 3]),
     fps_max_elev = NA,
-    ro_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[2, 4])),
-      as.numeric(qset_rsm_surv[2, 4]), qset_rsm_surv[2, 4]),
-    turb_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[3, 4])),
-      as.numeric(qset_rsm_surv[3, 4]), qset_rsm_surv[3, 4]),
-    spill_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[4, 4])),
-      as.numeric(qset_rsm_surv[4, 4]), qset_rsm_surv[4, 4]),
-    fps_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 4])),
-      as.numeric(qset_rsm_surv[5, 4]), qset_rsm_surv[5, 4]),
+    # ro_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[2, 4])),
+    #   as.numeric(qset_rsm_surv[2, 4]), qset_rsm_surv[2, 4]),
+    # turb_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[3, 4])),
+    #   as.numeric(qset_rsm_surv[3, 4]), qset_rsm_surv[3, 4]),
+    # spill_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[4, 4])),
+    #   as.numeric(qset_rsm_surv[4, 4]), qset_rsm_surv[4, 4]),
+    # fps_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 4])),
+    #   as.numeric(qset_rsm_surv[5, 4]), qset_rsm_surv[5, 4]),
     #!# Gotta do some weird date manipulation?
     weir_start_date = weir_dates[[1]][1],
     weir_end_date = weir_dates[[1]][2]
@@ -146,16 +146,9 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     !(alt_desc_list_rsm$rereg_mortality == alt_desc_list$rereg_mortality) || 
     !(alt_desc_list_rsm$fish_with_flow == alt_desc_list$fish_with_flow) ||
     !(alt_desc_list_rsm$dpe_column_name == alt_desc_list$dpe_column_name) ||
-    !(alt_desc_list_rsm$use_temp_dist == alt_desc_list$use_temp_dist) ||
-    !(alt_desc_list_rsm$fps_q_max == alt_desc_list$fps_q_max) || 
-    !(alt_desc_list_rsm$fps_bottom_elev == alt_desc_list$fps_bottom_elev) || 
-    !(alt_desc_list_rsm$fps_max_elev == alt_desc_list$fps_max_elev) ||
-    !(alt_desc_list_rsm$ro_surv == alt_desc_list$ro_surv) ||
-    !(alt_desc_list_rsm$turb_surv == alt_desc_list$turb_surv) ||
-    !(alt_desc_list_rsm$spill_surv == alt_desc_list$spill_surv) || 
-    !(alt_desc_list_rsm$fps_surv == alt_desc_list$fps_surv) || 
-    !(alt_desc_list_rsm$weir_start_date == alt_desc_list$weir_start_date) || 
-    !(alt_desc_list_rsm$weir_end_date == alt_desc_list$weir_end_date)
+    !(alt_desc_list_rsm$use_temp_dist == alt_desc_list$use_temp_dist) 
+    # !(alt_desc_list_rsm$weir_start_date == alt_desc_list$weir_start_date) || 
+    # !(alt_desc_list_rsm$weir_end_date == alt_desc_list$weir_end_date)
   ) {
     warning("Route specifications are mismatched between ResvData, QuickSets, and Route Survival Model sheets! Using values defined in the Route Survival Model.")
     alt_desc_list <- alt_desc_list_rsm
@@ -206,7 +199,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     q_ratio = seq(0, 1, by = 0.1),
     Spill = as.numeric(unlist(resvsheet[48:58,
       which(colnames(resvsheet) == reservoir)])),
-    `Fish Pass` = as.numeric(unlist(
+    FPS = as.numeric(unlist(
       qset_subset[which(colnames(qset_subset) == "Route Effectiveness nums"):
         (which(colnames(qset_subset) == "Route Effectiveness nums") + 10)]
     )),
