@@ -5,8 +5,7 @@
 #' @param water_year_types A dataframe containing "year" and "watertype", one 
 #' of "abundant", "adequate", "insufficient", and "deficient"
 #' @param temp_dist_df a dataframe containing dated temperature splits (often 
-#' month-by-month) based on year types: "C/W" (cool/wet), "N" (normal), and 
-#' "H/D" (hot/dry) 
+#' month-by-month) based on water year types in the water_year_types dataframe.
 #' @return Dataframe of temperature splits in each day (a proportion, 0-1, 
 #' reflecting which dates have what percent of the outflow will be redirected
 #' for temperature control operations). Flow through the fish passage structure
@@ -37,7 +36,7 @@ calcTempSplit <- function(ressim_data, water_year_types, temp_dist_df){
             lubridate::year(upper_date) <- yr
             date_interval <- lubridate::interval(lower_date, upper_date)
             tempSplitOut$split[which(tempSplitOut$Date %within% date_interval)] <- temp_dist_df[r-1,typeCol]
-            lower_date <- upper_date+1
+            lower_date <- upper_date + 1
         }
         # Now, finish up with the final interval (lower_date to the original date of the next year)
         lubridate::year(origin_date) <- lubridate::year(origin_date)+1
