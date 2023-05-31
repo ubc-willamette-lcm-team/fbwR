@@ -57,14 +57,14 @@ distributeFishDaily <- function(ressim, param_list, verbose = FALSE) {
   # Fish passage structures change the monthly run timing, so if there is
   #   an alternative in place (according to param_list$alt_desc), use the 
   #   alternative run timing
-  if (param_list$alt_desc[["fps_alternative"]] == "Y") {
+  if (param_list$alt_desc[["fp_alternative"]] == "Y") {
     fish_approaching <- data.frame(
       # Convert the date column into month only (instead of dyt format)
       Month = lubridate::month(param_list$monthly_runtiming$Date,
       # Use an abbreviated label instead of month number (e.g., use "Feb"
       # instead of 2)
         label = TRUE, abbr = TRUE),
-      # Because fps_alternative == "Yes", use the alternative column:
+      # Because fp_alternative == "Yes", use the alternative column:
       approaching_monthly = param_list$monthly_runtiming$approaching_alternative)
   } else {
   # Baseline fish timing is used if there is no collector
@@ -72,7 +72,7 @@ distributeFishDaily <- function(ressim, param_list, verbose = FALSE) {
       # Convert the date column into month only (instead of dyt format)
       Month = lubridate::month(param_list$monthly_runtiming$Date,
         label = TRUE, abbr = TRUE),
-      # Because fps_alternative == "No", use the BASELINE approaching column:
+      # Because fp_alternative == "No", use the BASELINE approaching column:
       approaching_monthly = param_list$monthly_runtiming$approaching_baseline)
   }
   # Join the run timing dataframe and above DF by the "Month" column
