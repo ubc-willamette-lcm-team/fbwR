@@ -64,10 +64,10 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
       qSpill_mean = mean(qSpill_mean),
       # Now add together daily means into monthly sums
       meanForebay_pop = sum(dailyMeanForebay_pop),
-      meanRO_pop = sum(dailyMeanRO_pop),
-      meanTurb_pop = sum(dailyMeanTurb_pop),
-      meanSpill_pop = sum(dailyMeanSpill_pop),
       meanFPS_pop = sum(dailyMeanFPS_pop),
+      meanTurb_pop = sum(dailyMeanTurb_pop),
+      meanRO_pop = sum(dailyMeanRO_pop),
+      meanSpill_pop = sum(dailyMeanSpill_pop),
       # Average % fish distribution
       avgDPS_FPS = sum(dailyMeanFPS_surv),
       avgDPS_PH = sum(dailyMeanTurb_surv),
@@ -83,7 +83,10 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
         select(-Date),
       by = "Month") %>%
       relocate(approaching_baseline, .after = exceedance_flow_cfs) %>%
-      relocate(approaching_alternative, .after = approaching_baseline)
+      relocate(approaching_alternative, .after = approaching_baseline) %>%
+      mutate(Month = factor(Month, levels = c("Sep", "Oct", "Nov", "Dec", 
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"))) %>%
+      arrange(Month)
     # Summary by water year type - computed survival probabilities
     #   First, for all years in the period of record
     survprob <- fish_passage_survival %>%
