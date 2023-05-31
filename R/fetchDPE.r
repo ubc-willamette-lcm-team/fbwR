@@ -24,6 +24,9 @@
 fetchDPE <- function(ressim, param_list) {
   # First, check to see what kind of DPE data we need (only baseline, FSS, etc.)
   fps_type <- param_list$alt_desc[["collector"]]
+  # Isolate the FPS row from the route_spec object
+  fps_specs <- param_list$route_specs[which(rownames(
+    param_list$route_specs) == "FPS"), ]
   ### ~~~ To make uncertain: find a linear function that this is derived
   ###   from real-world data. There is presumably some function that 
   ###   underlies this:
@@ -45,14 +48,16 @@ fetchDPE <- function(ressim, param_list) {
     elevmax_FPS <- -Inf
   } else {
     # If max elevation for the FPS is blank/empty, set to -Inf
-    elevmax_FPS <- ifelse(identical(param_list$fps_max_elev, numeric(0)),
-      elevmax_FPS <- Inf,
-      elevmax_FPS <- as.numeric(param_list$fps_max_elev)
+    elevmax_FPS <- ifelse(identical(param_list$alt_desc[["fps_max_elev"]], 
+      numeric(0)) || is.na(param_list$alt_desc[["fps_max_elev"]]),
+      Inf,
+      as.numeric(param_list$alt_desc[["fps_max_elev"]])
     )
     # Same for min elevation
-    elevmin_FPS <- ifelse(identical(param_list$fps_bottom_elev, numeric(0)),
-      elevmin_FPS <- -Inf,
-      elevmin_FPS <- as.numeric(param_list$fps_bottom_elev)
+    elevmin_FPS <- ifelse(identical(fps_specs$bottom_elev, numeric(0)) || 
+      is.na(fps_specs$bottom_elev),
+      -Inf,
+      as.numeric(fps_specs$bottom_elev)
     )
   }
   selected_dpe_col <- which(
