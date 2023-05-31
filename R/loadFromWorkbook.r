@@ -403,8 +403,8 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     mutate(
       ABUNDANT = coolwet,
       ADEQUATE = normal,
-      DEFICIT = (normal + hotdry) / 2,
-      INSUFFICIENT = hotdry
+      DEFICIT = hotdry,
+      INSUFFICIENT = (normal + hotdry) / 2
     ) %>%
     select(-c(coolwet, normal, hotdry))
   }
