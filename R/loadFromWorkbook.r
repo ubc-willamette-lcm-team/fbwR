@@ -76,7 +76,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     dpe_column_name = c("baseline_dpe", "fsc_dpe", "fss_dpe", "weir_dpe")[
       route_eff_x_column
     ],
-    temp_dist = qset_subset$`Temp_Dist?`,
+    use_temp_dist = qset_subset$`Temp_Dist?`,
     fps_q_max = qset_subset$`Fish Passage Q`,
     fps_bottom_elev = qset_subset$`Fish Pass bottom`,
     fps_max_elev = qset_subset$`topElevFP`,
@@ -117,7 +117,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     dpe_column_name = c("baseline_dpe", "fsc_dpe", "fss_dpe", "weir_dpe")[
       route_eff_x_idx
     ],
-    temp_dist = qset_rsm_alt[2, 6],
+    use_temp_dist = qset_rsm_alt[2, 6],
     # 
     fps_q_max = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 2])),
       as.numeric(qset_rsm_surv[5, 2]), qset_rsm_surv[5, 2]),
@@ -144,7 +144,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     !(alt_desc_list_rsm$rereg_mortality == alt_desc_list$rereg_mortality) || 
     !(alt_desc_list_rsm$fish_with_flow == alt_desc_list$fish_with_flow) ||
     !(alt_desc_list_rsm$dpe_column_name == alt_desc_list$dpe_column_name) ||
-    !(alt_desc_list_rsm$temp_dist == alt_desc_list$temp_dist) ||
+    !(alt_desc_list_rsm$use_temp_dist == alt_desc_list$use_temp_dist) ||
     !(alt_desc_list_rsm$fps_q_max == alt_desc_list$fps_q_max) || 
     !(alt_desc_list_rsm$fps_bottom_elev == alt_desc_list$fps_bottom_elev) || 
     !(alt_desc_list_rsm$fps_max_elev == alt_desc_list$fps_max_elev) ||
@@ -176,21 +176,28 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     bottom_elev = c(as.numeric(unlist(resvsheet[12:14,
       which(colnames(resvsheet) == reservoir)])),
       qset_subset$`Fish Pass bottom`),
+    passage_surv_rate = c(
+      qset_subset$`Surv_RO`,
+      qset_subset$`Surv_Turb`,
+      qset_subset$`Surv_Spill`,
+      qset_subset$`Surv_FP`
+    ),
+    gate_method = c(
+      qset_subset$`Gate_Method_RO`,
+      qset_subset$`Gate_Method_Turb`,
+      qset_subset$`Gate_Method_Spill`,
+      qset_subset$`Gate_Method_FP`
+    ),
     n_gates = as.numeric(unlist(resvsheet[16:19,
       which(colnames(resvsheet) == reservoir)])),
     min_flow = as.numeric(unlist(resvsheet[21:24,
       which(colnames(resvsheet) == reservoir)])),
     target_flow = as.numeric(unlist(resvsheet[26:29,
       which(colnames(resvsheet) == reservoir)])),
-    normally_used = normally_used_check,
+    normally_used = normally_used_check
     # c(unlist(resvsheet[31:33,
     #   which(colnames(resvsheet) == reservoir)]), NA),
-    gate_method = c(
-      qset_subset$`Gate_Method_RO`,
-      qset_subset$`Gate_Method_Turb`,
-      qset_subset$`Gate_Method_Spill`,
-      qset_subset$`Gate_Method_FP`
-  ))
+  )
   rownames(route_specs) <- c("RO", "Turb", "Spill", "FPS")
 
   route_eff <- data.frame(
