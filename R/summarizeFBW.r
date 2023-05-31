@@ -32,7 +32,7 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
     summarize(
       # Calculate hydrological information
       elev_P50 = median(elev, na.rm = T),
-      flow_P50 = median(turb_flow + RO_flow + spill_flow + FPS_flow,
+      flow_P50 = median(turb_flow + RO_flow + spill_flow,
         na.rm = T),
       # Average flow rates
       qFPS_mean = mean(FPS_flow, na.rm = T),
