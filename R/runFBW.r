@@ -54,7 +54,7 @@ runFBW <- function(template_file = NULL, param_list = NULL,
   #   through gates in multi-gate outlets
   route_survival_rates <- distributeFlow_Survival_gates(
     fish_distributed_outlets = fish_distributed,
-    param_list = param_list, verbose = verbose)
+    param_list = param_list)
   # Perform final calculations, multiplying survival by the proportion of fish 
   #   in outlet X (F.X)
   fish_passage_survival <- route_survival_rates %>%

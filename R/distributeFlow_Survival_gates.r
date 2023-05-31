@@ -49,7 +49,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
   for (i in c("RO", "Turb", "Spill", "FPS")) {
     # keep track of current structure
     structure <- tolower(i)
-    if (i == "FPS" && param_list$alt_desc$collector == "NONE") {
+    if (i == "FPS" && param_list$alt_desc[["collector"]] == "NONE") {
       message(paste0("No collector used, setting FPS survival to 0.\n"))
       fish_distributed_outlets <- fish_distributed_outlets %>%
         dplyr::mutate("{structure}_survival" := 0)
@@ -66,7 +66,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       next # Move to the next iteration of i
     }
     # structure_surv indicates a point value or "table"
-    structure_surv <- param_list$alt_desc[[paste0(structure, "_surv")]]
+    structure_surv <- resv_data_sub$passage_surv_rate
     message(paste0("\n...calculating survival for ", i, ": ", structure_surv))
     if (length(structure_surv) == 0) { # if this returns 0, skip
       warning(paste0("No survival rates provided for ", structure,
