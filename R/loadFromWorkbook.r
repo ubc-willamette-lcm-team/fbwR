@@ -107,19 +107,23 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   }
   # Create parameter list
   alt_desc_list_rsm <- list(
-    fp_alternative = qset_rsm_alt[2, 1],
-    nets = qset_rsm_alt[2, 2],
-    collector = qset_rsm_alt[2, 3], # Quickset
-    rereg = qset_rsm_alt[2, 4], # Quickset
-    rereg_mortality = suppressMessages(readxl::read_excel(fbw_excel,
-      sheet = "Route Survival Model", range = "E14", col_names = F)),
-    fish_with_flow = qset_rsm_alt[2, 5],
+    scenario_name = as.character(unlist(suppressMessages(readxl::read_excel(fbw_excel,
+      sheet = "Route Survival Model", range = "B7", col_names = F)))),
+    scenario_description = as.character(unlist(suppressMessages(readxl::read_excel(fbw_excel,
+      sheet = "Route Survival Model", range = "B9", col_names = F)))),
+    fp_alternative = as.character(qset_rsm_alt[2, 1]),
+    nets = as.character(qset_rsm_alt[2, 2]),
+    collector = as.character(qset_rsm_alt[2, 3]), # Quickset
+    rereg = as.character(qset_rsm_alt[2, 4]), # Quickset
+    rereg_mortality = as.numeric(suppressMessages(readxl::read_excel(fbw_excel,
+      sheet = "Route Survival Model", range = "E14", col_names = F))),
+    fish_with_flow = as.character(qset_rsm_alt[2, 5]),
     # Lookup the name of the DPE column 
     # that is being used based on the position of the "X" cell,
-    dpe_column_name = c("baseline_dpe", "col1_dpe", "col2_dpe", "col3_dpe")[
+    dpe_column_name = as.character(c("baseline_dpe", "col1_dpe", "col2_dpe", "col3_dpe")[
       route_eff_x_idx
-    ],
-    use_temp_dist = qset_rsm_alt[2, 6],
+    ]),
+    use_temp_dist = as.character(qset_rsm_alt[2, 6]),
     # 
     # # fps_q_max = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 2])),
     # #   as.numeric(qset_rsm_surv[5, 2]), qset_rsm_surv[5, 2]),
@@ -135,8 +139,8 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     # fps_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 4])),
     #   as.numeric(qset_rsm_surv[5, 4]), qset_rsm_surv[5, 4]),
     #!# Gotta do some weird date manipulation?
-    weir_start_date = weir_dates[[1]][1],
-    weir_end_date = weir_dates[[1]][2]
+    weir_start_date = as.character(weir_dates[[1]][1]),
+    weir_end_date = as.character(weir_dates[[1]][2])
   )
   if(
     !(alt_desc_list_rsm$fp_alternative == alt_desc_list$fp_alternative) ||
@@ -391,7 +395,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       INSUFFICIENT = NA
     )
   } else {
-    idx <- which(tempsplit[2, ] == reservoir)
+    idx <- which(tempsplit[2, ] == reservoir)[1]
     temp_dist <- data.frame(
       Date = as.Date(as.numeric(unlist(tempsplit[6:40, idx])),
         origin = "1899-12-30"),
@@ -405,7 +409,9 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       DEFICIT = hotdry,
       INSUFFICIENT = (normal + hotdry) / 2
     ) %>%
-    select(-c(coolwet, normal, hotdry))
+    select(-c(coolwet, normal, hotdry)) %>%
+    # Remove any all-NA rows
+    filter_all(any_vars(!is.na(.)))
   }
   # Compile into named list
   list(
