@@ -4,7 +4,7 @@
 \alias{distributeFish_outlets}
 \title{Calculate distribution of fish through outlets}
 \usage{
-distributeFish_outlets(fish_postDPE, param_list, verbose_output = FALSE)
+distributeFish_outlets(fish_postDPE, param_list, verbose = FALSE)
 }
 \arguments{
 \item{fish_postDPE}{Dataframe containing daily estimates of various
@@ -27,7 +27,7 @@ feet) at which the fish passage structure can operate
 DPE lookup table (provided in \code{param_list}). Used to determine how many
 which column of \code{route_dpe} AFTER the baseline should be selected?}
 
-\item{verbose_output}{(Optional) Logical argument indicating whether
+\item{verbose}{(Optional) Logical argument indicating whether
 intermediate columns (proportion of spill in each outlet: \code{pB.spill},
 \code{pB.turb}, \code{pB.RO}, and \code{pB.FPS}; fish-bearing flow through each
 outlet: \code{B.spill}, \code{B.turb}, \code{B.RO}, and \code{B.FPS}; and route
@@ -38,9 +38,9 @@ through each outlet is returned in the output dataframe.}
 \value{
 A dataframe with all of the columns of the input table,
 \code{fish_postDPE}, with the addition of some number of columns (depending on the
-\code{verbose_output} argument). At least the flow rate through the fish passage
+\code{verbose} argument). At least the flow rate through the fish passage
 structure, \code{FPS_flow}, and the proportion of fish passing through each
-outlet in the dam is returned. Optionally, if \code{verbose_output = TRUE},
+outlet in the dam is returned. Optionally, if \code{verbose = TRUE},
 intermediate variables like the proportion of flow through each outlet, route
 effectiveness, and fish-bearing flow are output.
 }

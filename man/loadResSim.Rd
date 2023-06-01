@@ -31,7 +31,7 @@ following standard input format of Res-Sim spreadsheets.}
 
 \item{elevsheet}{Name of Excel sheet containing ResSim results for pool
 elevation. If not provided, defaults to \code{NULL} and the function will use th
-first sheet ending in "-out"}
+first sheet ending in "-"}
 
 \item{outflowsheet}{Name of Excel sheet containing ResSim results for flow
 through all outlets for each day in the period of record. If not provided,

@@ -15,8 +15,7 @@ format) and information on daily Outflow (cfs), temperature splits}
 of "abundant", "adequate", "insufficient", and "deficient"}
 
 \item{temp_dist_df}{a dataframe containing dated temperature splits (often
-month-by-month) based on year types: "C/W" (cool/wet), "N" (normal), and
-"H/D" (hot/dry)}
+month-by-month) based on water year types in the water_year_types dataframe.}
 }
 \value{
 Dataframe of temperature splits in each day (a proportion, 0-1,
