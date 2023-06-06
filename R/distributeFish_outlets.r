@@ -68,8 +68,8 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
       mutate(
         # Binary indicator of whether elevation is sufficient
         adequate_elev = case_when(
-          elev >= fps_specs$bottom_elev & 
-            elev <= param_list$alt_desc[["fps_max_elev"]] ~ 1,
+          elev > fps_specs$bottom_elev &
+            elev < param_list$alt_desc[["fps_max_elev"]] ~ 1,
           TRUE ~ 0
         )
       )
@@ -104,22 +104,25 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
       } else {
         # otherwise: minimum of max flow and PH+RO flows (if elevation is adequate)
         fish_to_passFPS <- fish_to_passFPS %>%
-          mutate(FPS_flow = adequate_elev *
+          mutate(
+            temp_split = NA,
+            FPS_flow = adequate_elev *
             # Multiply the binary adequate_elev by the combined turb + RO flow
             pmin(fps_specs$max_flow, (turb_flow + RO_flow)))
         if (!verbose) {
           fish_to_passFPS <- fish_to_passFPS %>%
-            select(-c(adequate_elev))
+            select(-c(adequate_elev, temp_split))
         }
       }
     } else if(fps == "FSC") {
       fish_to_passFPS <- fish_to_passFPS %>% 
         mutate(
+          temp_split = NA,
           # Maximum flow so long as elevation is enough
           FPS_flow = fps_specs$max_flow * adequate_elev)
         if (!verbose) {
           fish_to_passFPS <- fish_to_passFPS %>%
-            select(-c(adequate_elev))
+            select(-c(adequate_elev, temp_split))
         }
     } else if(fps == "FISH WEIR") {
       # First check that the weir date is appropriate - issue warning if dates missing
@@ -130,6 +133,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
           mutate(
             # weir_boolean indicates if the weir is active
             #   In this case, because no dates given, assume active
+            temp_split = NA,
             weir_boolean = 1,
             # Perform a parallel minimum
             FPS_flow = pmin(fps_specs$max_flow, spill) *
@@ -137,13 +141,13 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
           )
         if (!verbose) {
           fish_to_passFPS <- fish_to_passFPS %>%
-            select(-c(adequate_elev, weir_boolean))
+            select(-c(adequate_elev, weir_boolean, temp_split))
         }
       } else {
         startdate <- tryCatch({
           # Enforce 2020 to ensure that leap year is included
           as.Date(paste0(param_list$alt_desc[["weir_start_date"]], "-2020"), "%d-%m-%Y")
-        }, error=function(e){
+        }, error = function(e){
           stop("Weir start date must be a date in %d-%m format (e.g., 25-05 for the 25th of May)\n")
         })
         enddate <- tryCatch({
@@ -220,7 +224,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
         B.FPS = FPS_flow * multiplier
         # B.Total=B.turb+B.RO+B.spill+B.FPS
       ),
-    "FSS" = fish_to_passFPS %>% 
+    "FSS" = fish_to_passFPS %>%
     # Floating surface structure influences Turbine(PH) and reg. outlet (RO) flows
     #   Subract off the FSS flows from the total flows
     #   RO/PH will be proportioned based on the split between them
@@ -271,10 +275,6 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
       pB.RO = B.RO / Q.Tot,
       pB.FPS = B.FPS / Q.Tot
     )
-
-
-
-    
   # Now that fish-bearing flow is calculated, apply route effectiveness. 
   # It requires linear interpolation, so first create linear 
   # interpolation functions using the supplied Qratio columns
@@ -335,13 +335,13 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
     select(-c(adj.Total))    
     }
   # Incorporate nets if they are being used
-  if(tolower(param_list$alt_desc[["nets"]]) == "y"){
+  if(tolower(param_list$alt_desc[["nets"]]) == "y") {
     fishDist <- fishDist %>%
       mutate(
         F.turb = 0,
         F.RO = 0)
-    if((resv_data$route_specs$normally_used[
-      which(resv_data$route_specs$outlet == "Spill")])=="n") {
+    if (tolower(param_list$route_specs$normally_used[
+      which(rownames(param_list$route_specs) == "Spill")]) == "n") {
       # If the spillway is not normally used, fish are distributed
       #   through it first then the FPS
       fishDist <- fishDist %>%
