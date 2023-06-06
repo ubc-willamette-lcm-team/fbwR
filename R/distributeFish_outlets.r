@@ -68,6 +68,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
       mutate(
         # Binary indicator of whether elevation is sufficient
         adequate_elev = case_when(
+          # Only accessible if above bottom_elev and above max - NON inclusive
           elev > fps_specs$bottom_elev &
             elev < param_list$alt_desc[["fps_max_elev"]] ~ 1,
           TRUE ~ 0
