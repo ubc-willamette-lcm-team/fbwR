@@ -509,7 +509,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         param_list$alt_desc[["rereg_mortality"]])))
     # Otherwise, if in the fish passage structure and it's the FSO type,
     #   apply this mortality
-    } else if (tolower(param_list$alt_desc[["rereg"]]) == "y" && 
+    } else if (tolower(param_list$alt_desc[["rereg"]]) == "y" &&
       i == "FPS" && param_list$alt_desc[["collector"]] == "FSO") {
       fish_distributed_outlets <- fish_distributed_outlets %>%
         # Rename the current survival column to "pre_rereg" for clarity
@@ -522,6 +522,26 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         param_list$alt_desc[["rereg_mortality"]])))
     } 
     # Otherwise leave the current survival column
+    ### FINAL STEP: If the elevation of the outlet is inappropriate, 0 survival!!!
+    # From the VBA module: 
+    # ' If the current elevation is below the minimum elevation, no fish can pass
+    # ' This is not how the original code was written, but it was an error in the original code
+    # ' Or If there is no flow, there will be no fish
+    # If Ele_Pool_Array(GetDate, GetYear) < outletData(2, outletIndex) Or outletFlow = 0 Then
+    #     getSurvivalPercent = 0
+    #     GoTo 3
+    # End If
+  bottom_elev <- resv_data_sub$bottom_elev
+  if (is.na(bottom_elev) || identical(bottom_elev, character(0))) {
+    bottom_elev <- 0
+  }
+  fish_distributed_outlets <- fish_distributed_outlets %>%
+    dplyr::mutate("{structure}_minelev" := case_when(
+      elev < bottom_elev ~ 0,
+      TRUE ~ 1
+    )) %>% dplyr::mutate("{structure}_survival" := !! sym(paste0(structure, "_survival")) * 
+      !! sym(paste0(structure, "_minelev"))
+    )
   }
   return(fish_distributed_outlets)
 }
