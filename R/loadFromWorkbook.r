@@ -18,6 +18,7 @@
 #' @import dplyr
 #' @import lubridate
 #' @import readxl
+#' @importFrom plyr .
 #' @export
 
 loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
@@ -420,7 +421,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     ) %>%
     select(-c(coolwet, normal, hotdry)) %>%
     # Remove any all-NA rows
-    filter_all(any_vars(!is.na(.)))
+    dplyr::filter_all(dplyr::any_vars(!is.na(.data)))
   }
   # Compile into named list
   list(

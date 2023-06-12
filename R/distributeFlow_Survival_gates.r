@@ -40,7 +40,6 @@
 #'
 #' @import dplyr
 #' @importFrom rlang :=
-#' @importFrom plyr .
 
 distributeFlow_Survival_gates <- function(fish_distributed_outlets, 
   param_list) {

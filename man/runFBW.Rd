@@ -39,6 +39,10 @@ year, with each row representing a single day in the 365-day year.}
 \item{summarize}{Should the daily outputs be summarized into average monthly
 survival estimates? This summarizes across years within the period of record
 in the ResSim input file.}
+
+\item{verbose}{Should all intermediate columns be retained? If \code{TRUE}, every
+intermediate step is included in the FBW output. Otherwise, only columns
+required to run the main FBW functions are maintained.}
 }
 \description{
 Loads FBW data from a defined template spreadsheet in XLSX format.

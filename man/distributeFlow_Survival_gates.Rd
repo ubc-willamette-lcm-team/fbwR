@@ -47,9 +47,6 @@ mortality is applied).
 \item If \code{rereg} is equal to "Y": \code{rereg_mort}, a single numeric value of the
 mortality rate associated with reregulation (i.e., 1 - survival).
 }}
-
-\item{resv_data}{Data on number of gates, as well as minimum and maximum flow
-rates for each outlet type at the dam}
 }
 \description{
 Calculate distribution of flow through individual gates within each dam

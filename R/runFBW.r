@@ -18,6 +18,9 @@
 #' @param summarize Should the daily outputs be summarized into average monthly
 #' survival estimates? This summarizes across years within the period of record
 #' in the ResSim input file.
+#' @param verbose Should all intermediate columns be retained? If `TRUE`, every
+#' intermediate step is included in the FBW output. Otherwise, only columns
+#' required to run the main FBW functions are maintained.
 #' 
 #' @import lubridate
 #' @import dplyr
@@ -45,7 +48,7 @@ runFBW <- function(template_file = NULL, param_list = NULL,
       param_list = param_list, verbose = verbose))
   # Calculate DPE
   fish_daily_postDPE <- fish_daily %>%
-    mutate(
+    dplyr::mutate(
       dpe = fetchDPE(fish_daily, param_list = param_list)$dam_passage_efficiency,
       # Multiply approaching population by dam passage efficiency
       approaching_daily_postDPE = approaching_daily * dpe
