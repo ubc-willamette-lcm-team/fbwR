@@ -36,11 +36,11 @@
 #'   mortality is applied).
 #' 4. If `rereg` is equal to "Y": `rereg_mort`, a single numeric value of the
 #'   mortality rate associated with reregulation (i.e., 1 - survival).
-#' @param resv_data Data on number of gates, as well as minimum and maximum flow
-#' rates for each outlet type at the dam
 #' @export
 #'
 #' @import dplyr
+#' @importFrom rlang :=
+#' @importFrom plyr .
 
 distributeFlow_Survival_gates <- function(fish_distributed_outlets, 
   param_list) {
