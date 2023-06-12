@@ -74,7 +74,7 @@ fetchDPE <- function(ressim, param_list) {
   fps_elev <- which(param_list$route_dpe$elev >= elevmin_FPS & 
     param_list$route_dpe$elev <= elevmax_FPS)
   dpes <- param_list$route_dpe$baseline_dpe
-  dpes[fps_elev] <- param_list$route_dpe[, selected_dpe_col][fps_elev]
+  dpes[fps_elev] <- unlist(param_list$route_dpe[, selected_dpe_col])[fps_elev]
   combined_interpolator <- stats::approxfun(
     x = param_list$route_dpe$elev,
     y = dpes
