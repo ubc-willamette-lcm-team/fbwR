@@ -160,7 +160,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   resv_normallyused <- c(unlist(resvsheet[31:34,
     which(colnames(resvsheet) == reservoir)]))
   rsm_normallyused <- qset_rsm_surv[2:5, 9]
-  if(!all(resv_normallyused == rsm_normallyused, na.rm = T)) {
+  if (!all(resv_normallyused == rsm_normallyused, na.rm = TRUE)) {
     warning("'Normally used' specifications are mismatched between ResvData and Route Survival Model sheets! Using values defined in the Route Survival Model.")
     normally_used_check <- rsm_normallyused
   } else {
@@ -380,10 +380,19 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   )
   # Temperature distributions need to be looked up from
   # a series of columns
-  which(tempsplit[2, ] == "Active Reservoir:") + 2
+  # which(tempsplit[2, ] == "Active Reservoir:") + 2
+  avail_temp_array <- c((which(tempsplit[2, ] == "Active Reservoir:") + 2), 
+    which(tempsplit[2, ] == "Green Peter"))
+  if (length(avail_temp_array) == 3) {
+    # If there are more than two entries, then the reservoir is GPR
+    avail_temp_array <- avail_temp_array[c(1, 3)]
+  }
   available_temps <- na.omit(unique(unlist(tempsplit[2,
-    (which(tempsplit[2, ] == "Active Reservoir:") + 2):
-    (which(tempsplit[2, ] == "Green Peter"))
+    # avail_temp_array[1]:avail_temp_array[2]
+    # (which(tempsplit[2, ] == "Active Reservoir:") + 2):
+    # # Addition here: When the reservoir IS Green Peter, take the second
+    # (ifelse(
+    #   which(tempsplit[2, ] == "Green Peter") == (which(tempsplit[2, ] == "Active Reservoir:") + 1)
     ])))
   if (!(reservoir %in% available_temps)) {
     warning("No temperature data provided for reservoir ", reservoir)
