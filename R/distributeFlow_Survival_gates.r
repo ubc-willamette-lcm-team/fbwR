@@ -180,12 +180,13 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         for (g in 1:gates) {
           varname_flow <- paste0(structure, "_flow_gate", g)
           varname_surv <- paste0(structure, "_surv_gate", g)
-          fish_distributed_outlets <- mutate(fish_distributed_outlets, 
+          fish_distributed_outlets <- dplyr::mutate(
+            fish_distributed_outlets,
             # Replace the flow data with newflow based on equal Q
             !!varname_flow := newflow)
           if (multielev) {
-            multelev_table[,1] <- elevXs
-            multelev_table[,2] <- newflow
+            multelev_table[, 1] <- elevXs
+            multelev_table[, 2] <- newflow
             for (e in 1:nElevs) {
               # Here, look up the flow-based survival for both upper and lower
               # survYs <- c(survYs,survInterp_multi[[i]](newflow))
@@ -208,7 +209,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           } else { # if not multielev
             nearestSurv <- survLinearInterp(newflow[[varname_flow]])
           }
-          fish_distributed_outlets <- mutate(fish_distributed_outlets, 
+          fish_distributed_outlets <- dplyr::mutate(fish_distributed_outlets, 
             !!varname_surv := nearestSurv)
           weighted_survival <- ifelse(
             is.na(nearestSurv),
@@ -232,9 +233,10 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         weighted_survival <- 0
         # VBA revision here: treat the gates differently
         fish_distributed_outlets <- fish_distributed_outlets %>%
-          dplyr::mutate(realized_gates = pmin(floor(
-            flowData_tmp / min_flow), gates, na.rm = T))
-        newflow <- flowData_tmp/fish_distributed_outlets$realized_gates
+          dplyr::mutate(
+            realized_gates = pmin(floor(flowData_tmp / min_flow),
+              gates, na.rm = TRUE))
+        newflow <- flowData_tmp / fish_distributed_outlets$realized_gates
         if (multielev) {
           multelev_table[, 1] <- elevXs
           multelev_table[, 2] <- newflow
@@ -248,10 +250,10 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           # y = survival rates (high and low)
           # x = elevation of the day
           # interpolate y~x
-          nearestSurv <- pmin(pmax(multelev_table[,3], multelev_table[,4]),
+          nearestSurv <- pmin(pmax(multelev_table[, 3], multelev_table[, 4]),
           # if the extrapolated value is greater than
           #  the maximum survival, just use max. survival
-            multelev_table[, 3] +      # y1 
+            multelev_table[, 3] +      # y1
             ((multelev_table[, 4] - multelev_table[, 3]) * # y2-y1 range
             ((bottomElev[[1]] - multelev_table[, 1]) / (bottomElev[[1]] -
               bottomElev[[2]]))
@@ -268,7 +270,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       } else if (resv_data_sub$gate_method == "Unit to Max Q") {
         max_flow <- resv_data_sub$max_flow
         if (is.na(max_flow)) {
-          stop(paste0("No maximum flow rate set for ", structure, 
+          stop(paste0("No maximum flow rate set for ", structure,
             ", but 'Unit to Max Q' method selected. Exiting."))
         }
         weighted_survival <- 0
@@ -336,11 +338,12 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
               flowData_tmp <= (target_flow * ngates) & ngates == 2 ~ 1,
               # Otherwise, the catch-all final case (indicated with TRUE ~ )
               # is outlet flow divided by target flow
-              TRUE ~ ceiling(flowData / target_flow)
+              TRUE ~ ceiling(.data$flowData / target_flow)
             ),
             # If 0 gates are being used, flow=0
             # Else,
-            gateflow = ifelse(realized_gates == 0, 0, flowData / realized_gates)
+            gateflow = ifelse(realized_gates == 0, 0, .data$flowData /
+              .data$realized_gates)
           )
           if (multielev) {
             multelev_table[, 1] <- elevXs
@@ -362,7 +365,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
               # if the extrapolated value is greater than
               #  the maximum survival, just use max. survival
                 multelev_table[, 3] +      # y1 equivalent
-                ((multelev_table[, 4] - multelev_table[,3] ) * # y2-y1 range
+                ((multelev_table[, 4] - multelev_table[, 3]) * # y2-y1 range
                 ((bottomElev[[1]] - multelev_table[, 1]) / (bottomElev[[1]] -
                   bottomElev[[2]])) # (x1 - new X)/(x1-x2)
                 )
@@ -376,13 +379,13 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       } else if (resv_data_sub$gate_method == "Peaking Performance") {
         min_flow <- resv_data_sub$min_flow
         if (is.na(min_flow)) {
-          warning(paste0("No minimum flow rate given for ", structure, 
+          warning(paste0("No minimum flow rate given for ", structure,
             "; assuming no minimum flow rate (i.e., minimum = 0)."))
           min_flow <- 0
         }
         max_flow <- resv_data_sub$max_flow
         if (is.na(max_flow)) {
-          warning(paste0("No maximum flow rate given for ", structure, 
+          warning(paste0("No maximum flow rate given for ", structure,
             "; assuming no maximum flow rate (i.e., maximum = infinite)."))
           max_flow <- Inf
         }
@@ -410,8 +413,9 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           # x = elevation of the day
           # interpolate y~x
           ### min(y2, y1+((y2-y1)*((x1-2100)/(x1-x2))))
-          survMinFlow <- pmin(pmax(mo_table_min[, 3], mo_table_min[, 4]), # if the extrapolated value is greater than
+          # If the extrapolated value is greater than
           #  the maximum survival, just use max. survival
+          survMinFlow <- pmin(pmax(mo_table_min[, 3], mo_table_min[, 4]),
             mo_table_min[, 3] +      # y1 equivalent
             ((mo_table_min[, 4] - mo_table_min[, 3]) * # y2-y1 range
             ((bottomElev[[1]] - mo_table_min[, 1]) / (bottomElev[[1]] -
@@ -516,7 +520,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           !!paste0(structure, "_survival_pre_rereg") := !! sym(paste0(structure,
             "_survival"))) %>%
         # Now apply rereg mortality
-        dplyr::mutate("{structure}_survival" := 
+        dplyr::mutate("{structure}_survival" :=
           !! sym(paste0(structure, "_survival_pre_rereg")) * (1 - as.numeric(
         param_list$alt_desc[["rereg_mortality"]])))
     } 
@@ -536,9 +540,10 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
   }
   fish_distributed_outlets <- fish_distributed_outlets %>%
     dplyr::mutate("{structure}_minelev" := case_when(
-      elev < bottom_elev ~ 0,
+      .data$elev < bottom_elev ~ 0,
       TRUE ~ 1
-    )) %>% dplyr::mutate("{structure}_survival" := !! sym(paste0(structure, "_survival")) * 
+    )) %>% dplyr::mutate("{structure}_survival" := !!
+      sym(paste0(structure, "_survival")) *
       !! sym(paste0(structure, "_minelev"))
     )
   }

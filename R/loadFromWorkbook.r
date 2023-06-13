@@ -299,14 +299,17 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   rsm_timing <-  suppressMessages(readxl::read_excel(fbw_excel,
     sheet = "Route Survival Model", range = "A36:E48", col_names = T))
   monthly_runtiming_rsm <- data.frame(rsm_timing %>%
-    rename(
-      Date = Month,
-      approaching_baseline = Baseline1,
-      approaching_alternative = `Estimated with Downstream Passage2`
+    dplyr::rename(
+      Date = .data$Month,
+      approaching_baseline = .data$Baseline1,
+      approaching_alternative = .data$`Estimated with Downstream Passage2`
     ) %>%
-    select(Date, approaching_baseline, approaching_alternative))
-  if( !identical(monthly_runtiming_rsm$approaching_baseline, monthly_runtiming_resv$approaching_baseline) ||
-    !identical(monthly_runtiming_rsm$approaching_alternative, monthly_runtiming_resv$approaching_alternative)
+    dplyr::select(.data$Date, .data$approaching_baseline,
+      .data$approaching_alternative))
+  if( !identical(monthly_runtiming_rsm$approaching_baseline,
+      monthly_runtiming_resv$approaching_baseline) ||
+    !identical(monthly_runtiming_rsm$approaching_alternative,
+      monthly_runtiming_resv$approaching_alternative)
   ) {
     warning("Monthly run timing mismatches between ResvData and Route Survival Model sheets! Using values defined in the Route Survival Model sheet.")
   }
@@ -413,13 +416,13 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       normal = as.numeric(unlist(tempsplit[6:40, idx + 2])),
       hotdry = as.numeric(unlist(tempsplit[6:40, idx + 3]))
     ) %>%
-    mutate(
-      ABUNDANT = coolwet,
-      ADEQUATE = normal,
-      DEFICIT = hotdry,
-      INSUFFICIENT = (normal + hotdry) / 2
+    dplyr::mutate(
+      ABUNDANT = .data$coolwet,
+      ADEQUATE = .data$normal,
+      DEFICIT = .data$hotdry,
+      INSUFFICIENT = (.data$normal + .data$hotdry) / 2
     ) %>%
-    select(-c(coolwet, normal, hotdry)) %>%
+    dplyr::select(-c(.data$coolwet, .data$normal, .data$hotdry)) %>%
     # Remove any all-NA rows
     dplyr::filter_all(dplyr::any_vars(!is.na(.data)))
   }

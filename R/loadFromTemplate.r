@@ -26,7 +26,7 @@ loadFromTemplate <- function(template_file) {
     sheet = "alt_description", skip = 6,
     na = character(), trim_ws = FALSE, col_names = TRUE, col_types = "text") %>%
     # Remove the definition of the parameter
-    select(-c(definition))
+    dplyr::select(-c(.data$definition))
   alt_desc_list <- list(alt_desc$value)[[1]]
   names(alt_desc_list) <- alt_desc$parameter_name
 
@@ -36,7 +36,7 @@ loadFromTemplate <- function(template_file) {
     # Read in as text, change later
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text") %>%
     # Remove the definition of the parameter
-    dplyr::select(-definition)))
+    dplyr::select(-.data$definition)))
   # The first row can be set as column names, then removed
   colnames(route_specs) <- route_specs[1, ]
   route_specs <- route_specs[-1, ]
@@ -80,7 +80,6 @@ loadFromTemplate <- function(template_file) {
   water_year_types <- data.frame(readxl::read_excel(path = template_file,
     sheet = "water_year_types", skip = 6,
     na = character(), trim_ws = F, col_names = TRUE, col_types = "text"))
-  
   return(list(
     "alt_desc" = alt_desc_list,
     "route_specs" = route_specs,

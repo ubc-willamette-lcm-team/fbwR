@@ -10,7 +10,6 @@
 #' reflecting which dates have what percent of the outflow will be redirected
 #' for temperature control operations). Flow through the fish passage structure
 #' is calculated as outflow * (1 - proportion redirected to temperature control)
-#' @import dplyr
 #' @import lubridate
 
 calcTempSplit <- function(ressim_data, water_year_types, temp_dist_df){
@@ -20,7 +19,7 @@ calcTempSplit <- function(ressim_data, water_year_types, temp_dist_df){
         split = NaN
     )
     # Iterate over years
-    for(i in 1:length(water_year_types$year)){
+    for (i in 1:length(water_year_types$year)) {
         yr <- as.numeric(water_year_types$year[i])
         # Identify year type and corresponding column in temp_dist_df
         type <- water_year_types$type[i]
@@ -31,7 +30,7 @@ calcTempSplit <- function(ressim_data, water_year_types, temp_dist_df){
         lubridate::year(lower_date) <- yr
         origin_date <- lower_date # Make a copy for later
         # Iterate over these rows
-        for(r in 2:nrow(temp_dist_df)){
+        for (r in 2:nrow(temp_dist_df)) {
             upper_date <- temp_dist_df$Date[r]-1
             lubridate::year(upper_date) <- yr
             date_interval <- lubridate::interval(lower_date, upper_date)

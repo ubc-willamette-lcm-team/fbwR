@@ -32,28 +32,30 @@
 distributeFishDaily <- function(ressim, param_list, verbose = FALSE) {
   ressim_tmp <- ressim %>%
     # First, calculate days in month as days_in_month column
-    mutate(
+    dplyr::mutate(
       days_in_month = lubridate::days_in_month(Date))
   leap_dates <- which(day(ressim$Date) == 29 & month(ressim$Date) == 2)
+  # Skip leap years
   if (identical(leap_dates, integer(0))) {
     message("No instances of February 29 in the ResSim dataset, so leap years will be ignored. Only dates up to February 28th will be included in FBW.")
     ressim_tmp <- ressim_tmp %>%
-      mutate(days_in_month = case_when(
+      dplyr::mutate(days_in_month = dplyr::case_when(
           days_in_month == 29 ~ 28,
           TRUE ~ days_in_month))
   }
   ressim_tmp <- ressim_tmp %>%
-    mutate(
-      YrMo = paste0(lubridate::year(Date), "-", lubridate::month(Date)),
-      Month = lubridate::month(Date, label = TRUE, abbr = TRUE)) %>%
+    dplyr::mutate(
+      YrMo = paste0(lubridate::year(.data$Date), "-", 
+        lubridate::month(.data$Date)),
+      Month = lubridate::month(.data$Date, label = TRUE, abbr = TRUE)) %>%
     # Then calculate year-month statistics (mean and total outflow)
-    group_by(YrMo) %>%
+    dplyr::group_by(.data$YrMo) %>%
     # Q refers to flow rate through the dam
-    mutate(
-      MonthlyQ_mean = mean(outflow_flow),
-      MonthlyQ_total = sum(outflow_flow)
+    dplyr::mutate(
+      MonthlyQ_mean = mean(.data$outflow_flow),
+      MonthlyQ_total = sum(.data$outflow_flow)
     ) %>%
-    ungroup()
+    dplyr::ungroup()
   # Fish passage structures change the monthly run timing, so if there is
   #   an alternative in place (according to param_list$alt_desc), use the 
   #   alternative run timing
@@ -76,9 +78,8 @@ distributeFishDaily <- function(ressim, param_list, verbose = FALSE) {
       approaching_monthly = param_list$monthly_runtiming$approaching_baseline)
   }
   # Join the run timing dataframe and above DF by the "Month" column
-  ressim_runTiming <- left_join(ressim_tmp,
+  ressim_runTiming <- dplyr::left_join(ressim_tmp,
     fish_approaching, by = "Month")
-
   # Determine how the distribution will be done: flat or with flow
   dist_type <- ifelse(param_list$alt_desc[["fish_with_flow"]] == "Y", "flow", 
     "flat")
@@ -86,23 +87,23 @@ distributeFishDaily <- function(ressim, param_list, verbose = FALSE) {
     # If flat, equal proportion across days in each month
     outDF <- ressim_runTiming %>%
       # Add new columns, prop_within_monthlyflow and approaching_daily
-      mutate(
-        prop_within_month = 1 / days_in_month)
+      dplyr::mutate(
+        prop_within_month = 1 / .data$days_in_month)
   } else if (dist_type == "flow") {
     # If flow, calculate proportional to each day's proportion of monthly total
     # This is the method on page 22, not page 16 of FWB App K
     outDF <- ressim_runTiming %>%
-      mutate(
-        prop_within_month = outflow_flow / MonthlyQ_total)
+      dplyr::mutate(
+        prop_within_month = .data$outflow_flow / .data$MonthlyQ_total)
   }
-  outDF <- outDF %>% mutate(
-    approaching_daily = approaching_monthly * prop_within_month)
+  outDF <- outDF %>% dplyr::mutate(
+    approaching_daily = .data$approaching_monthly * .data$prop_within_month)
   if (verbose) {
     return(outDF)
   } else {
     # If not verbose (i.e., not for testing), remove a bunch of columns 
     return(outDF %>%
-    select(-c(days_in_month, YrMo, prop_within_month, 
-      MonthlyQ_mean, MonthlyQ_total)))
+      dplyr::select(-c(.data$days_in_month, .data$YrMo, .data$prop_within_month, 
+        .data$MonthlyQ_mean, .data$MonthlyQ_total)))
   }
 }

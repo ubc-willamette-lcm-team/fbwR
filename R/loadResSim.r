@@ -100,7 +100,7 @@ loadResSim <- function(infile, wide = TRUE,
                 values_drop_na = FALSE))
             lubridate::year(df_out$Date) <- as.numeric(df_out$year)
             ressim_list[[l]] <- df_out %>%
-                select(-"year")
+              dplyr::select(-.data$year)
         }
     }
     ### DATA PROCESSING - merge ressim flow data:

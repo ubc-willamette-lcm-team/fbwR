@@ -95,7 +95,7 @@ fetchDPE <- function(ressim, param_list) {
   #   ))
   ressim <- ressim %>%
     dplyr::mutate(
-      dam_passage_efficiency = combined_interpolator(elev)
+      dam_passage_efficiency = combined_interpolator(.data$elev)
     )
   return(ressim)
 }

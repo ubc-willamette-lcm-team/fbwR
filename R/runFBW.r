@@ -34,42 +34,45 @@ runFBW <- function(template_file = NULL, param_list = NULL,
   } else {
     message(paste0(
       "...Loading ResSim from file: ", basename(ressim_file)))
-    ressim <- loadResSim(infile = ressim_file, wide = ressim_wide)
+    ressim <- fbwR::loadResSim(infile = ressim_file, wide = ressim_wide)
   }
   if (!is.null(param_list)) {
     message("...Using provided param_list inputs")
   } else {
     message(paste0(
       "...Loading parameters from template file: ", basename(template_file)))
-    param_list <- loadFromTemplate(template_file = template_file)
+    param_list <- fbwR::loadFromTemplate(template_file = template_file)
   }
   # Distribute fish population into daily passing populations
-  fish_daily <- data.frame(distributeFishDaily(ressim,
+  fish_daily <- data.frame(fbwR::distributeFishDaily(ressim,
       param_list = param_list, verbose = verbose))
   # Calculate DPE
   fish_daily_postDPE <- fish_daily %>%
     dplyr::mutate(
-      dpe = fetchDPE(fish_daily, param_list = param_list)$dam_passage_efficiency,
+      dpe = fbwR::fetchDPE(
+        fish_daily,
+        param_list = param_list)$dam_passage_efficiency,
       # Multiply approaching population by dam passage efficiency
-      approaching_daily_postDPE = approaching_daily * dpe
+      approaching_daily_postDPE = .data$approaching_daily * .data$dpe
     )
-  fish_distributed <- distributeFish_outlets(fish_postDPE = fish_daily_postDPE,
+  fish_distributed <- fbwR::distributeFish_outlets(
+    fish_postDPE = fish_daily_postDPE,
     param_list = param_list, verbose = verbose)
   # Calculate survival rates from flow data, including distribution of fish 
   #   through gates in multi-gate outlets
-  route_survival_rates <- distributeFlow_Survival_gates(
+  route_survival_rates <- fbwR::distributeFlow_Survival_gates(
     fish_distributed_outlets = fish_distributed,
     param_list = param_list)
   # Perform final calculations, multiplying survival by the proportion of fish 
   #   in outlet X (F.X)
   fish_passage_survival <- route_survival_rates %>%
     dplyr::mutate(
-      passage_survRO = ro_survival * F.RO,
-      passage_survTurb = turb_survival * F.turb,
-      passage_survSpill = spill_survival * F.spill,
-      passage_survFPS = fps_survival * F.FPS,
-      passage_survAllRoutes = passage_survRO + passage_survTurb +
-        passage_survSpill + passage_survFPS
+      passage_survRO = .data$ro_survival * .data$F.RO,
+      passage_survTurb = .data$turb_survival * .data$F.turb,
+      passage_survSpill = .data$spill_survival * .data$F.spill,
+      passage_survFPS = .data$fps_survival * .data$F.FPS,
+      passage_survAllRoutes = .data$passage_survRO + .data$passage_survTurb +
+        .data$passage_survSpill + .data$passage_survFPS
     )
     if (summarize == FALSE) {
       return(fish_passage_survival)

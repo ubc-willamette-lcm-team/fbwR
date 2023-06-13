@@ -65,12 +65,12 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
     # Overwrite param_list values
     # Determine which elevations are within the upper and lower boundaries 
     fish_to_passFPS <- fish_postDPE %>%
-      mutate(
+      dplyr::mutate(
         # Binary indicator of whether elevation is sufficient
         adequate_elev = case_when(
           # Only accessible if above bottom_elev and above max - NON inclusive
-          elev > fps_specs$bottom_elev &
-            elev < param_list$alt_desc[["fps_max_elev"]] ~ 1,
+          .data$elev > fps_specs$bottom_elev &
+            .data$elev < param_list$alt_desc[["fps_max_elev"]] ~ 1,
           TRUE ~ 0
         )
       )
@@ -94,66 +94,67 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
         # To calculate the flow through the FPS:
         # First, 0 if elevation is inadequate (i.e., adequate_elev==0)
         # Take the minimum of qmax and FLOW-OUT for that day * (1-TEMP-SPLIT)
-          mutate(
+          dplyr::mutate(
             temp_split = as.numeric(temp_split$split),
-            FPS_flow = adequate_elev * pmin(fps_specs$max_flow,
-            (outflow_flow * (1 - temp_split))))
+            FPS_flow = .data$adequate_elev * pmin(fps_specs$max_flow,
+            (.data$outflow_flow * (1 - temp_split))))
         if (!verbose) {
           fish_to_passFPS <- fish_to_passFPS %>%
-            select(-c(adequate_elev, temp_split))
+            dplyr::select(-c(adequate_elev, temp_split))
         }
       } else {
         # otherwise: minimum of max flow and PH+RO flows (if elevation is adequate)
         fish_to_passFPS <- fish_to_passFPS %>%
-          mutate(
+          dplyr::mutate(
             temp_split = NA,
-            FPS_flow = adequate_elev *
+            FPS_flow = .data$adequate_elev *
             # Multiply the binary adequate_elev by the combined turb + RO flow
-            pmin(fps_specs$max_flow, (turb_flow + RO_flow)))
+            pmin(fps_specs$max_flow, (.data$turb_flow + .data$RO_flow)))
         if (!verbose) {
           fish_to_passFPS <- fish_to_passFPS %>%
-            select(-c(adequate_elev, temp_split))
+            dplyr::select(-c(.data$adequate_elev, .data$temp_split))
         }
       }
     } else if(fps == "FSC") {
       fish_to_passFPS <- fish_to_passFPS %>% 
-        mutate(
+        dplyr::mutate(
           temp_split = NA,
           # Maximum flow so long as elevation is enough
-          FPS_flow = fps_specs$max_flow * adequate_elev)
+          FPS_flow = fps_specs$max_flow * .data$adequate_elev)
         if (!verbose) {
           fish_to_passFPS <- fish_to_passFPS %>%
-            select(-c(adequate_elev, temp_split))
+            dplyr::select(-c(.data$adequate_elev, .data$temp_split))
         }
-    } else if(fps == "FISH WEIR") {
+    } else if (fps == "FISH WEIR") {
       # First check that the weir date is appropriate - issue warning if dates missing
       if(all(dim(param_list$alt_desc[["weir_start_date"]]) == c(0, 0)) ||
         all(dim(param_list$alt_desc[["weir_end_date"]]) == c(0, 0))) {
         warning("Weir start date and/or end date are missing, assuming weir active all year.")
         fish_to_passFPS <- fish_to_passFPS %>%
-          mutate(
+          dplyr::mutate(
             # weir_boolean indicates if the weir is active
             #   In this case, because no dates given, assume active
             temp_split = NA,
             weir_boolean = 1,
             # Perform a parallel minimum
-            FPS_flow = pmin(fps_specs$max_flow, spill) *
-              weir_boolean * adequate_elev
+            FPS_flow = pmin(fps_specs$max_flow, .data$spill) *
+              .data$weir_boolean * .data$adequate_elev
           )
         if (!verbose) {
           fish_to_passFPS <- fish_to_passFPS %>%
-            select(-c(adequate_elev, weir_boolean, temp_split))
+            dplyr::select(-c(.data$adequate_elev, .data$weir_boolean,
+              .data$temp_split))
         }
       } else {
         startdate <- tryCatch({
           # Enforce 2020 to ensure that leap year is included
-          as.Date(paste0(param_list$alt_desc[["weir_start_date"]], "-2020"), "%d-%m-%Y")
-        }, error = function(e){
-          stop("Weir start date must be a date in %d-%m format (e.g., 25-05 for the 25th of May)\n")
+          as.Date(paste0(param_list$alt_desc[["weir_start_date"]], "-2020"),
+            "%d-%m-%Y")}, error = function(e) {
+            stop("Weir start date must be a date in %d-%m format (e.g., 25-05 for the 25th of May)\n")
         })
         enddate <- tryCatch({
-          as.Date(paste0(param_list$alt_desc[["weir_end_date"]], "-2020"), "%d-%m-%Y")
-        }, error=function(e){
+          as.Date(paste0(param_list$alt_desc[["weir_end_date"]], "-2020"),
+            "%d-%m-%Y")}, error = function(e) {
           stop("Weir end date must be a date in %d-%m format (e.g., 25-05 for the 25th of May)\n")
         })
         # If the start date falls "after" the end date, push the start date backwards an extra year 
@@ -168,113 +169,120 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
         daily_weir_md <- paste0(month(daily_weir), "-", day(daily_weir))
         # Add binary weir column
         fish_to_passFPS <- fish_to_passFPS %>%
-          mutate(
-            MoDay = paste0(month(Date), "-", day(Date)),
+          dplyr::mutate(
+            MoDay = paste0(month(.data$Date), "-", day(.data$Date)),
             # Here, weir_boolean = 1 if in the active date range, 0 if not
-            weir_boolean = ifelse(MoDay %in% daily_weir_md, 1, 0),
+            weir_boolean = ifelse(.data$MoDay %in% daily_weir_md, 1, 0),
             # Take the minimum of qMax or spillway flow,
             # multiplied by weir date (0/1) and adequate elevation (0/1)
-            FPS_flow = pmin(fps_specs$max_flow, spill) * weir_boolean *
-              adequate_elev
+            FPS_flow = pmin(fps_specs$max_flow, .data$spill) *
+              .data$weir_boolean * .data$adequate_elev
           )
         if (!verbose) {
           fish_to_passFPS <- fish_to_passFPS %>%
-            select(-c(adequate_elev, weir_boolean))
+            dplyr::select(-c(.data$adequate_elev, .data$weir_boolean))
         }
       }
     } else if (fps == "FSO") {
       fish_to_passFPS <- fish_to_passFPS %>% 
-        mutate(
-          FPS_flow = pmin(fps_specs$max_flow, outflow_flow) * adequate_elev)
+        dplyr::mutate(
+          FPS_flow = pmin(fps_specs$max_flow, .data$outflow_flow) *
+            .data$adequate_elev)
         if (!verbose) {
           fish_to_passFPS <- fish_to_passFPS %>%
-            select(-c(adequate_elev))
+            dplyr::select(-c(.data$adequate_elev))
         }
     } else {
       stop('FPS must be one of: "NONE", "FSC", "FSS", "FSO", or "FISH WEIR"')
     }
   } else { # Finally, if it is "NONE", 0 flow
     fish_to_passFPS <- fish_postDPE %>%
-      mutate(FPS_flow = 0)
+      dplyr::mutate(FPS_flow = 0)
   }
   # Perform calculations based on which FPS was indicated in the function call,
   # Save outputs into intermediate dataframe fishBearingFlow with new columns 
-  # for fish bearing flow (B.___) created using mutate()
+  # for fish bearing flow (B.___) created using dplyr::mutate()
   fish_to_passFPS <- fish_to_passFPS %>% 
-    mutate(Q.Tot = turb_flow + spill_flow + RO_flow)
+    dplyr::mutate(Q.Tot = .data$turb_flow + .data$spill_flow + .data$RO_flow)
   # "switch" provides different outcomes depending on the value of `fps`
   fishBearingFlow <- switch(as.character(fps),
-    "NONE" = data.frame(fish_to_passFPS) %>% # If no collector, simple distribution
-      mutate(
-        B.spill = spill_flow,
-        B.turb = turb_flow,
-        B.RO = RO_flow,
+    # If no collector, simple distribution
+    "NONE" = data.frame(fish_to_passFPS) %>%
+      dplyr::mutate(
+        B.spill = .data$spill_flow,
+        B.turb = .data$turb_flow,
+        B.RO = .data$RO_flow,
         B.FPS = 0
       ),
     "FSC" = fish_to_passFPS %>% # If FSC, simply sum together B.total above and FPS_flow
     #   Here, if there is an FSC, the total attraction water is more than the
     #   outflow. It's dam + recirculating FSC water
-      mutate(
+      dplyr::mutate(
         # This will preserve the total flow, which needs to be maintained
         #   in later fish survival calculations
         # These new steps from FBW Basic commands
-        multiplier = (Q.Tot / (Q.Tot + FPS_flow)),
-        B.spill = spill_flow * multiplier,
-        B.turb = turb_flow * multiplier,
-        B.RO = RO_flow * multiplier,
-        B.FPS = FPS_flow * multiplier
+        multiplier = (.data$Q.Tot / (.data$Q.Tot + .data$FPS_flow)),
+        B.spill = .data$spill_flow * .data$multiplier,
+        B.turb = .data$turb_flow * .data$multiplier,
+        B.RO = .data$RO_flow * .data$multiplier,
+        B.FPS = .data$FPS_flow * .data$multiplier
         # B.Total=B.turb+B.RO+B.spill+B.FPS
       ),
-    "FSS" = fish_to_passFPS %>%
+    # If FSS:
     # Floating surface structure influences Turbine(PH) and reg. outlet (RO) flows
     #   Subract off the FSS flows from the total flows
     #   RO/PH will be proportioned based on the split between them
-      mutate(
-        fishPctRO = RO_flow / (turb_flow + RO_flow),
-        B.spill = spill_flow,
-        B.turb = pmax(0, turb_flow - (FPS_flow * (1 - fishPctRO))),
-        B.RO = pmax(0, RO_flow - (FPS_flow * fishPctRO)),
-        B.FPS = FPS_flow
-      ) %>% select(-fishPctRO),
+    "FSS" = fish_to_passFPS %>%
+      dplyr::mutate(
+        fishPctRO = .data$RO_flow / (.data$turb_flow + .data$RO_flow),
+        B.spill = .data$spill_flow,
+        B.turb = pmax(0, .data$turb_flow - (.data$FPS_flow * (1 - .data$fishPctRO))),
+        B.RO = pmax(0, .data$RO_flow - (.data$FPS_flow * .data$fishPctRO)),
+        B.FPS = .data$FPS_flow
+      ) %>% 
+      dplyr::select(-.data$fishPctRO),
     # The FSO collects flow needed for FPS_flow first from the spill, then the RO, then the PH
-    "FSO" = fish_to_passFPS %>% # 
+    "FSO" = fish_to_passFPS %>% #
       ### NOTE: These are coded "out of order", but the spill - RO - PH order is preserved
-      mutate(
-        B.spill = pmax(spill_flow - FPS_flow, 0), # First take from the spillway...
-        B.turb = pmax(turb_flow + 
-          pmin(RO_flow + pmin(spill_flow - FPS_flow, 0), 0), 0), # any remaining flow from RO_flow and spill, otherwise the original value
-        B.RO=pmax(RO_flow + 
-          pmin(spill_flow - FPS_flow, 0), 0), # any remaining flow from spill, otherwise the original value
-        B.FPS = FPS_flow
+      dplyr::mutate(
+        # First take from the spillway...
+        B.spill = pmax(.data$spill_flow - .data$FPS_flow, 0),
+        # any remaining flow from RO_flow and spill, otherwise the orig. value
+        B.turb = pmax(.data$turb_flow +
+          pmin(.data$RO_flow + pmin(.data$spill_flow - .data$FPS_flow, 0), 0),
+            0), 
+        B.RO = pmax(.data$RO_flow + pmin(.data$spill_flow - .data$FPS_flow, 0),
+          0), # any remaining flow from spill, otherwise the original value
+        B.FPS = .data$FPS_flow
       ) %>%
       # Remove flow from spill, RO, and powerhouse/turbine
-      mutate(
-        spill_flow = B.spill,
-        turb_flow = B.turb, 
-        RO_flow = B.RO
+      dplyr::mutate(
+        spill_flow = .data$B.spill,
+        turb_flow = .data$B.turb,
+        RO_flow = .data$B.RO
       ),
     # If FISH WEIR, the FPS collects from the spillway, otherwise flows are the same
     "FISH WEIR" = fish_to_passFPS %>% 
-      mutate(
-        B.spill = spill_flow - FPS_flow,
-        B.turb = turb_flow,
-        B.RO = RO_flow, 
-        B.FPS = FPS_flow
+      dplyr::mutate(
+        B.spill = .data$spill_flow - .data$FPS_flow,
+        B.turb = .data$turb_flow,
+        B.RO = .data$RO_flow,
+        B.FPS = .data$FPS_flow
       ) %>% 
       # Take away flow from the spillway with a FISH WEIR
-      mutate(spill_flow = B.spill)
+      dplyr::mutate(spill_flow = .data$B.spill)
   )
   # A final check, return a warning if FPS flow is higher than spillway flow. 
   if (fps == "FISH WEIR" & length(which(fishBearingFlow$B.spill < 0)) > 0) {
     warning("Some B.spill values are <0 (this can happen when you specify a 'FISH WEIR' FPS and the spill flow is less than FPS_flow.")
   }
-  percentDist <- fishBearingFlow %>% 
+  percentDist <- fishBearingFlow %>%
   # First, calculate proportional flow
-    mutate(
-      pB.spill = B.spill / Q.Tot,
-      pB.turb = B.turb / Q.Tot,
-      pB.RO = B.RO / Q.Tot,
-      pB.FPS = B.FPS / Q.Tot
+    dplyr::mutate(
+      pB.spill = .data$B.spill / .data$Q.Tot,
+      pB.turb = .data$B.turb / .data$Q.Tot,
+      pB.RO = .data$B.RO / .data$Q.Tot,
+      pB.FPS = .data$B.FPS / .data$Q.Tot
     )
   # Now that fish-bearing flow is calculated, apply route effectiveness. 
   # It requires linear interpolation, so first create linear 
@@ -282,12 +290,11 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
   #   (these are called later)
   ret <- data.frame(param_list$route_eff)
   if (all(is.na(ret$FPS)) | length(ret$FPS) == 0) {
-    fps_RElookup <- function(x){return(0)}
+    fps_RElookup <- function(x) return(0)
   } else {
     # If there are any values:
     fps_RElookup <- approxfun(
       x = ret$q_ratio,
-      #### HMMMMMMMMM
       y = ret$FPS,
       rule = 2
     )
@@ -303,7 +310,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
     rule = 2
   )
   PH_RElookup <- approxfun(
-    x = ret$q_ratio, 
+    x = ret$q_ratio,
     y = ret$Turb,
     rule = 2
   )
@@ -311,34 +318,38 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
   #   Note: This is termed Denom_Array in FBW VB code
   RETable <- percentDist %>%
     # Apply RE using the interpolation functions
-    mutate(
-      RE.spill = spill_RElookup(pB.spill),
-      RE.turb = PH_RElookup(pB.turb),
-      RE.RO = RO_RElookup(pB.RO),
-      RE.FPS = fps_RElookup(pB.FPS),
-      adj.Total = ((RE.spill * pB.spill) + (RE.FPS * pB.FPS) +
-        (RE.RO * pB.RO) + (RE.turb * pB.turb))
+    dplyr::mutate(
+      RE.spill = spill_RElookup(.data$pB.spill),
+      RE.turb = PH_RElookup(.data$pB.turb),
+      RE.RO = RO_RElookup(.data$pB.RO),
+      RE.FPS = fps_RElookup(.data$pB.FPS),
+      adj.Total = ((.data$RE.spill * .data$pB.spill) + 
+        (.data$RE.FPS * .data$pB.FPS) +
+        (.data$RE.RO * .data$pB.RO) + 
+        (.data$RE.turb * .data$pB.turb))
     )
   # Now, adjust for proportion of fish through each outlet
   #   PercentToPass calculations
-  fishDist <- RETable %>% 
+  fishDist <- RETable %>%
     # Then, adjust for proportion of fish through each outlet
-    mutate(
-      F.spill = (approaching_daily_postDPE * RE.spill * pB.spill)/ 
-        adj.Total,
-      F.turb = (approaching_daily_postDPE * RE.turb * pB.turb)/
-        adj.Total,
-      F.RO = (approaching_daily_postDPE * RE.RO * pB.RO)/adj.Total,
-      F.FPS = (approaching_daily_postDPE * RE.FPS * pB.FPS) / adj.Total
-    ) 
+    dplyr::mutate(
+      F.spill = (.data$approaching_daily_postDPE * .data$RE.spill *
+        .data$pB.spill) / .data$adj.Total,
+      F.turb = (.data$approaching_daily_postDPE * .data$RE.turb *
+        .data$pB.turb) / .data$adj.Total,
+      F.RO = (.data$approaching_daily_postDPE * .data$RE.RO * .data$pB.RO) /
+        .data$adj.Total,
+      F.FPS = (.data$approaching_daily_postDPE * .data$RE.FPS *
+        .data$pB.FPS) / .data$adj.Total
+    )
     if (!verbose) {
       fishDist <- fishDist %>%
-    select(-c(adj.Total))    
+        dplyr::select(-c(.data$adj.Total))
     }
   # Incorporate nets if they are being used
   if(tolower(param_list$alt_desc[["nets"]]) == "y") {
     fishDist <- fishDist %>%
-      mutate(
+      dplyr::mutate(
         F.turb = 0,
         F.RO = 0)
     if (tolower(param_list$route_specs$normally_used[
@@ -346,28 +357,29 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
       # If the spillway is not normally used, fish are distributed
       #   through it first then the FPS
       fishDist <- fishDist %>%
-        mutate(
-          F.spill = approaching_daily_postDPE * 
-            (RE.spill * pB.spill) / adj.Total,
-          F.FPS = approaching_daily_postDPE - F.spill
+        dplyr::mutate(
+          F.spill = .data$approaching_daily_postDPE *
+            (.data$RE.spill * .data$pB.spill) / .data$adj.Total,
+          F.FPS = .data$approaching_daily_postDPE - .data$F.spill
         )
     } else {
       fishDist <- fishDist %>%
-        mutate(
+        dplyr::mutate(
           F.spill = 0,
-          F.FPS = approaching_daily_postDPE
+          F.FPS = .data$approaching_daily_postDPE
         )
     }
   }
-  fishDist_out <- fishDist %>% 
-    mutate(F.NoPass = approaching_daily - approaching_daily_postDPE)
+  fishDist_out <- fishDist %>%
+    dplyr::mutate(
+      F.NoPass = .data$approaching_daily - .data$approaching_daily_postDPE)
   # Return the "fishDist" data frame depending on verbose output
   if (!verbose) {
     return(fishDist_out %>%
-      select(-c( # Remove the following
-        B.spill, B.turb, B.RO, B.FPS,
-        pB.spill, pB.turb, pB.RO, pB.FPS,
-        RE.spill, RE.turb, RE.RO, RE.FPS
+      dplyr::select(-c( # Remove the following
+        .data$B.spill, .data$B.turb, .data$B.RO, .data$B.FPS,
+        .data$pB.spill, .data$pB.turb, .data$pB.RO, .data$pB.FPS,
+        .data$RE.spill, .data$RE.turb, .data$RE.RO, .data$RE.FPS
       )))
   } else {
     return(fishDist_out)
