@@ -100,7 +100,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
             (.data$outflow_flow * (1 - temp_split))))
         if (!verbose) {
           fish_to_passFPS <- fish_to_passFPS %>%
-            dplyr::select(-c(adequate_elev, temp_split))
+            dplyr::select(-c(.data$adequate_elev, .data$temp_split))
         }
       } else {
         # otherwise: minimum of max flow and PH+RO flows (if elevation is adequate)
@@ -202,7 +202,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
   # Perform calculations based on which FPS was indicated in the function call,
   # Save outputs into intermediate dataframe fishBearingFlow with new columns 
   # for fish bearing flow (B.___) created using dplyr::mutate()
-  fish_to_passFPS <- fish_to_passFPS %>% 
+  fish_to_passFPS <- fish_to_passFPS %>%
     dplyr::mutate(Q.Tot = .data$turb_flow + .data$spill_flow + .data$RO_flow)
   # "switch" provides different outcomes depending on the value of `fps`
   fishBearingFlow <- switch(as.character(fps),
