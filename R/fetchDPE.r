@@ -17,8 +17,10 @@
 #' which column of `route_dpe` AFTER the baseline should be selected?
 #' @return A vector of DPE with one entry for each pool elevation provided.
 #' 
-#' @import dplyr
-#' @import stats
+#' @importFrom dplyr mutate
+#' @importFrom stats approxfun
+#' @importFrom rlang .data
+#' 
 #' @export
 
 fetchDPE <- function(ressim, param_list) {
@@ -27,36 +29,22 @@ fetchDPE <- function(ressim, param_list) {
   # Isolate the FPS row from the route_spec object
   fps_specs <- param_list$route_specs[which(rownames(
     param_list$route_specs) == "FPS"), ]
-  ### ~~~ To make uncertain: find a linear function that this is derived
-  ###   from real-world data. There is presumably some function that 
-  ###   underlies this:
-  ###     DPE ~ elev + NOISE
-  ###   so if we generate the NOISE randomly we can add random deviates 
-  ###   (centred on 0)
-  ### 
-  #### First, create the baseline interpolator: this is like calling a function
-  ####   which can be called later. Providing new X values generates new Y values
-  ###baseline_linear_interpolator <- stats::approxfun(
-  ###  x = param_list$route_dpe$elev,
-  ###  y = param_list$route_dpe$baseline_dpe,
-  ###  rule = 2)
-  
   # Check for min/max elevation for the fish passage structure: 
   #   If the elevation is not right, the baseline DPE will be used.
-  if (fps_type == "NONE" || is.na(param_list$alt_desc[["dpe_column_name"]]) || 
+  if (fps_type == "NONE" || is.na(param_list$alt_desc[["dpe_column_name"]]) ||
     identical(param_list$alt_desc[["dpe_column_name"]], character(0))) {
     elevmin_FPS <- Inf # By making the minimum elevation infinite, only the
     # baseline will be applied
     elevmax_FPS <- -Inf
   } else {
     # If max elevation for the FPS is blank/empty, set to -Inf
-    elevmax_FPS <- ifelse(identical(param_list$alt_desc[["fps_max_elev"]], 
+    elevmax_FPS <- ifelse(identical(param_list$alt_desc[["fps_max_elev"]],
       numeric(0)) || is.na(param_list$alt_desc[["fps_max_elev"]]),
       Inf,
       as.numeric(param_list$alt_desc[["fps_max_elev"]])
     )
     # Same for min elevation
-    elevmin_FPS <- ifelse(identical(fps_specs$bottom_elev, numeric(0)) || 
+    elevmin_FPS <- ifelse(identical(fps_specs$bottom_elev, numeric(0)) ||
       is.na(fps_specs$bottom_elev),
       -Inf,
       as.numeric(fps_specs$bottom_elev)
@@ -64,38 +52,17 @@ fetchDPE <- function(ressim, param_list) {
   }
   selected_dpe_col <- which(
     colnames(param_list$route_dpe) == param_list$alt_desc[["dpe_column_name"]])
-  # selected_dpe_interpolator <- stats::approxfun(
-  #     x = param_list$route_dpe$elev,
-  #     y = unlist(param_list$route_dpe[, selected_dpe_col]),
-  #     rule = 2)
-  # baseline_dpe <- baseline_linear_interpolator(ressim$elev)
-  # fps_dpe <- selected_dpe_interpolator(ressim$elev)
-  ### Replace those instances
-  fps_elev <- which(param_list$route_dpe$elev >= elevmin_FPS & 
+  fps_elev <- which(param_list$route_dpe$elev >= elevmin_FPS &
     param_list$route_dpe$elev <= elevmax_FPS)
+  # Revised approach June 2023: DPE is a linear approximation of a composite DPE
+  #   array
   dpes <- param_list$route_dpe$baseline_dpe
   dpes[fps_elev] <- unlist(param_list$route_dpe[, selected_dpe_col])[fps_elev]
   combined_interpolator <- stats::approxfun(
     x = param_list$route_dpe$elev,
     y = dpes
   )
-  # ressim <- suppressWarnings(ressim %>%
-  #   dplyr::mutate(
-  #     which_dpe = dplyr::case_when(
-  #       (elev >= elevmin_FPS & elev <= elevmax_FPS) ~ "fps_dpe",
-  #       # Otherwise (i.e., TRUE, a catch-all for the rest) use baseline
-  #       TRUE ~ "baseline_dpe"
-  #     ),
-  #     dam_passage_efficiency = dplyr::case_when(
-  #       # If within elevation boundaries, apply DPE
-  #       (elev >= elevmin_FPS & elev <= elevmax_FPS) ~ fps_dpe,
-  #       # Otherwise (i.e., TRUE, a catch-all for the rest) use baseline
-  #       TRUE ~ baseline_dpe
-  #     )
-  #   ))
-  ressim <- ressim %>%
-    dplyr::mutate(
-      dam_passage_efficiency = combined_interpolator(.data$elev)
-    )
+  ressim <-  dplyr::mutate(ressim,
+      dam_passage_efficiency = combined_interpolator(.data$elev))
   return(ressim)
 }

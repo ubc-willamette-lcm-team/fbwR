@@ -2,7 +2,8 @@
 % Please edit documentation in R/runFBW.r
 \name{runFBW}
 \alias{runFBW}
-\title{Loads FBW data from a defined template spreadsheet in XLSX format.}
+\title{Run all steps of the FBW model, using only ResSim data and a biological/
+dam operation template file.}
 \usage{
 runFBW(
   template_file = NULL,
@@ -45,5 +46,6 @@ intermediate step is included in the FBW output. Otherwise, only columns
 required to run the main FBW functions are maintained.}
 }
 \description{
-Loads FBW data from a defined template spreadsheet in XLSX format.
+Run all steps of the FBW model, using only ResSim data and a biological/
+dam operation template file.
 }

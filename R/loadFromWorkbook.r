@@ -15,10 +15,14 @@
 #' cell B7 of the Route Survival Model sheet in `fbw_excel`.
 #' @return A list of parameters required to run the FBW model in R.
 #'
-#' @import dplyr
-#' @import lubridate
-#' @import readxl
-#' @importFrom plyr .
+#' @importFrom dplyr rename
+#' @importFrom dplyr select
+#' @importFrom dplyr filter_all
+#' @importFrom dplyr any_vars
+#' @importFrom dplyr %>%
+#' @importFrom readxl read_excel
+#' @importFrom stats na.omit
+#' @importFrom rlang .data
 #' @export
 
 loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
@@ -39,12 +43,12 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   resvsheet <- suppressMessages(readxl::read_excel(fbw_excel,
     sheet = "ResvData"))
   qset <- suppressWarnings(suppressMessages(readxl::read_excel(fbw_excel, sheet = "QuickSets")))
-  stopifnot(reservoir %in% na.omit(unique(qset$Reservoir)))
+  stopifnot(reservoir %in% stats::na.omit(unique(qset$Reservoir)))
   # Subset the quickset data rows to those which correspond to the reservoirs
   # Find those which are NOT empty: These are the breaks in rows between
   #  reservoir quickset "chunks"
   qs_breaks <- which(!(is.na(qset$Reservoir)))
-  names(qs_breaks) <- na.omit(unique(qset$Reservoir))
+  names(qs_breaks) <- stats::na.omit(unique(qset$Reservoir))
   # Now, we can use the reservoir to look up the indices
   qset_range <- qs_breaks[c(
       # Start at the row which corresponds to the reservoir
@@ -62,7 +66,6 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   route_eff_x_column <- which(toupper(
     c(qset_subset$`...37`, qset_subset$`...38`,
         qset_subset$`...39`, qset_subset$`...40`)) == "X")
-  # if(identical(route_eff_x_column, character(0)))
   ### Build the output list, following template format
   ### ALT DESCRIPTION
   alt_desc_list <- list(
@@ -75,49 +78,42 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     rereg = qset_subset$`Rereg?`, # Quickset
     rereg_mortality = qset_subset$`Rereg Mort.`,
     fish_with_flow = qset_subset$`Fish w Flow`,
-    # Lookup the name of the DPE column 
-    # that is being used based on the position of the "X" cell,
     use_temp_dist = qset_subset$`Temp_Dist?`,
     dpe_column_name = c("baseline_dpe", "col1_dpe", "col2_dpe", "col3_dpe")[
       route_eff_x_column
     ],
-    # fps_q_max = qset_subset$`Fish Passage Q`,
-    # fps_bottom_elev = qset_subset$`Fish Pass bottom`,
-    # ro_surv = tolower(qset_subset$`Surv_RO`),
-    # turb_surv = tolower(qset_subset$`Surv_Turb`),
-    # spill_surv = tolower(qset_subset$`Surv_Spill`),
-    # fps_surv = tolower(qset_subset$`Surv_FP`),
-    #!# Gotta do some weird date manipulation?
     weir_start_date = qset_subset$startWeirDate,
     weir_end_date = qset_subset$endWeirDate
   )
-  ### There may be differences between these values and those defined in the 
+  ### There may be differences between these values and those defined in the
   ###   Route Survival Model sheet
   qset_rsm_alt <- t(suppressMessages(readxl::read_excel(fbw_excel,
-    sheet = "Route Survival Model", range = "A11:B16", col_names = F)))
+    sheet = "Route Survival Model", range = "A11:B16", col_names = FALSE)))
   qset_rsm_surv <- t(suppressMessages(readxl::read_excel(fbw_excel,
-    sheet = "Route Survival Model", range = "A17:E25", col_names = F)))
+    sheet = "Route Survival Model", range = "A17:E25", col_names = FALSE)))
   route_eff_x_column_eff <- suppressMessages(readxl::read_excel(fbw_excel,
-    sheet = "Effectiveness", range = "K2:N2", col_names = F))
+    sheet = "Effectiveness", range = "K2:N2", col_names = FALSE))
   route_eff_x_idx <- which(toupper(route_eff_x_column_eff) == "X")
   weir_dates <- as.vector(suppressMessages(readxl::read_excel(fbw_excel,
-    sheet = "Route Survival Model", range = "G12:G13", col_names = FALSE, 
+    sheet = "Route Survival Model", range = "G12:G13", col_names = FALSE,
     na = "NA")))
   if (length(weir_dates) == 0) {
     weir_dates <- list(NA, NA)
   }
   # Create parameter list
   alt_desc_list_rsm <- list(
-    scenario_name = as.character(unlist(suppressMessages(readxl::read_excel(fbw_excel,
-      sheet = "Route Survival Model", range = "B7", col_names = F)))),
-    scenario_description = as.character(unlist(suppressMessages(readxl::read_excel(fbw_excel,
-      sheet = "Route Survival Model", range = "B9", col_names = F)))),
+    scenario_name = as.character(unlist(suppressMessages(readxl::read_excel(
+      fbw_excel, sheet = "Route Survival Model", range = "B7",
+      col_names = FALSE)))),
+    scenario_description = as.character(unlist(suppressMessages(readxl::read_excel(
+      fbw_excel, sheet = "Route Survival Model", range = "B9",
+      col_names = FALSE)))),
     fp_alternative = as.character(qset_rsm_alt[2, 1]),
     nets = as.character(qset_rsm_alt[2, 2]),
-    collector = as.character(qset_rsm_alt[2, 3]), # Quickset
-    rereg = as.character(qset_rsm_alt[2, 4]), # Quickset
+    collector = as.character(qset_rsm_alt[2, 3]),
+    rereg = as.character(qset_rsm_alt[2, 4]),
     rereg_mortality = as.numeric(suppressMessages(readxl::read_excel(fbw_excel,
-      sheet = "Route Survival Model", range = "E14", col_names = F))),
+      sheet = "Route Survival Model", range = "E14", col_names = FALSE))),
     fish_with_flow = as.character(qset_rsm_alt[2, 5]),
     # Lookup the name of the DPE column 
     # that is being used based on the position of the "X" cell,
@@ -125,35 +121,20 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       route_eff_x_idx
     ]),
     use_temp_dist = as.character(qset_rsm_alt[2, 6]),
-    # 
-    # # fps_q_max = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 2])),
-    # #   as.numeric(qset_rsm_surv[5, 2]), qset_rsm_surv[5, 2]),
-    # fps_bottom_elev = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 3])),
-    #   as.numeric(qset_rsm_surv[5, 3]), qset_rsm_surv[5, 3]),
     fps_max_elev = NA,
-    # ro_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[2, 4])),
-    #   as.numeric(qset_rsm_surv[2, 4]), qset_rsm_surv[2, 4]),
-    # turb_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[3, 4])),
-    #   as.numeric(qset_rsm_surv[3, 4]), qset_rsm_surv[3, 4]),
-    # spill_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[4, 4])),
-    #   as.numeric(qset_rsm_surv[4, 4]), qset_rsm_surv[4, 4]),
-    # fps_surv = ifelse(!is.na(as.numeric(qset_rsm_surv[5, 4])),
-    #   as.numeric(qset_rsm_surv[5, 4]), qset_rsm_surv[5, 4]),
     #!# Gotta do some weird date manipulation?
     weir_start_date = as.character(weir_dates[[1]][1]),
     weir_end_date = as.character(weir_dates[[1]][2])
   )
-  if(
+  if (
     !(alt_desc_list_rsm$fp_alternative == alt_desc_list$fp_alternative) ||
     !(alt_desc_list_rsm$nets == alt_desc_list$nets) ||
     !(alt_desc_list_rsm$collector == alt_desc_list$collector) ||
-    !(alt_desc_list_rsm$rereg == alt_desc_list$rereg) || 
-    !(alt_desc_list_rsm$rereg_mortality == alt_desc_list$rereg_mortality) || 
+    !(alt_desc_list_rsm$rereg == alt_desc_list$rereg) ||
+    !(alt_desc_list_rsm$rereg_mortality == alt_desc_list$rereg_mortality) ||
     !(alt_desc_list_rsm$fish_with_flow == alt_desc_list$fish_with_flow) ||
     !(alt_desc_list_rsm$dpe_column_name == alt_desc_list$dpe_column_name) ||
-    !(alt_desc_list_rsm$use_temp_dist == alt_desc_list$use_temp_dist) 
-    # !(alt_desc_list_rsm$weir_start_date == alt_desc_list$weir_start_date) || 
-    # !(alt_desc_list_rsm$weir_end_date == alt_desc_list$weir_end_date)
+    !(alt_desc_list_rsm$use_temp_dist == alt_desc_list$use_temp_dist)
   ) {
     warning("Route specifications are mismatched between ResvData, QuickSets, and Route Survival Model sheets! Using values defined in the Route Survival Model.")
     alt_desc_list <- alt_desc_list_rsm
@@ -195,8 +176,6 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     target_flow = as.numeric(unlist(resvsheet[26:29,
       which(colnames(resvsheet) == reservoir)])),
     normally_used = normally_used_check
-    # c(unlist(resvsheet[31:33,
-    #   which(colnames(resvsheet) == reservoir)]), NA),
   )
   rownames(route_specs) <- c("RO", "Turb", "Spill", "FPS")
 
@@ -271,7 +250,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   )
   colnames(route_dpe_eff) <- c("elev", "elev_description", "baseline_dpe",
     "col1_dpe", "col2_dpe", "col3_dpe")
-  if( !identical(route_dpe_eff$baseline_dpe, route_dpe_resv$baseline_dpe) ||
+  if (!identical(route_dpe_eff$baseline_dpe, route_dpe_resv$baseline_dpe) ||
     !identical(route_dpe_eff$col1_dpe, route_dpe_resv$col1_dpe) ||
     !identical(route_dpe_eff$col2_dpe, route_dpe_resv$col2_dpe) ||
     !identical(route_dpe_eff$col3_dpe, route_dpe_resv$col3_dpe)
@@ -306,7 +285,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     ) %>%
     dplyr::select(.data$Date, .data$approaching_baseline,
       .data$approaching_alternative))
-  if( !identical(monthly_runtiming_rsm$approaching_baseline,
+  if (!identical(monthly_runtiming_rsm$approaching_baseline,
       monthly_runtiming_resv$approaching_baseline) ||
     !identical(monthly_runtiming_rsm$approaching_alternative,
       monthly_runtiming_resv$approaching_alternative)

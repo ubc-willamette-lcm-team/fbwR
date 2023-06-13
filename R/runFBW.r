@@ -1,4 +1,5 @@
-#' Loads FBW data from a defined template spreadsheet in XLSX format.
+#' Run all steps of the FBW model, using only ResSim data and a biological/
+#' dam operation template file.
 #' @param template_file File path to an Excel spreadsheet with standardized
 #' inputs. One of `template_path` or `param_list` must be provided; if using
 #' a template, it is loaded and translated into a parameter list like
@@ -22,8 +23,8 @@
 #' intermediate step is included in the FBW output. Otherwise, only columns
 #' required to run the main FBW functions are maintained.
 #' 
-#' @import lubridate
-#' @import dplyr
+#' @importFrom dplyr mutate
+#' @importFrom rlang .data
 #' @export
 
 runFBW <- function(template_file = NULL, param_list = NULL,
@@ -47,10 +48,8 @@ runFBW <- function(template_file = NULL, param_list = NULL,
   fish_daily <- data.frame(fbwR::distributeFishDaily(ressim,
       param_list = param_list, verbose = verbose))
   # Calculate DPE
-  fish_daily_postDPE <- fish_daily %>%
-    dplyr::mutate(
-      dpe = fbwR::fetchDPE(
-        fish_daily,
+  fish_daily_postDPE <- dplyr::mutate(fish_daily,
+      dpe = fbwR::fetchDPE(.data, 
         param_list = param_list)$dam_passage_efficiency,
       # Multiply approaching population by dam passage efficiency
       approaching_daily_postDPE = .data$approaching_daily * .data$dpe
@@ -65,8 +64,7 @@ runFBW <- function(template_file = NULL, param_list = NULL,
     param_list = param_list)
   # Perform final calculations, multiplying survival by the proportion of fish 
   #   in outlet X (F.X)
-  fish_passage_survival <- route_survival_rates %>%
-    dplyr::mutate(
+  fish_passage_survival <-  dplyr::mutate(route_survival_rates, 
       passage_survRO = .data$ro_survival * .data$F.RO,
       passage_survTurb = .data$turb_survival * .data$F.turb,
       passage_survSpill = .data$spill_survival * .data$F.spill,

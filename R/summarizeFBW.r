@@ -8,9 +8,23 @@
 #' water year type classification; and `monthly_runtiming`, a dataframe of 
 #' the percent of fish approaching a dam in each month.
 #' @return A list containing two objects: a summary by month, and a summary
-#' by water year type in the period of record, including quantiles. 
-#' @import lubridate
-#' @import dplyr 
+#' by water year type in the period of record, including stats::quantiles.
+#'  
+#' @importFrom lubridate year
+#' @importFrom lubridate month
+#' @importFrom dplyr %>%
+#' @importFrom dplyr mutate
+#' @importFrom dplyr group_by
+#' @importFrom dplyr ungroup
+#' @importFrom dplyr summarize
+#' @importFrom dplyr left_join
+#' @importFrom dplyr arrange
+#' @importFrom dplyr relocate
+#' @importFrom dplyr bind_rows
+#' @importFrom stats median
+#' @importFrom stats quantile
+#' @importFrom stats median
+#' @importFrom rlang .data
 #' @export
 
 summarizeFBW <- function(fish_passage_survival, param_list) {
@@ -31,8 +45,8 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
     dplyr::group_by(.data$groupingDate, .data$Month) %>%
     dplyr::summarize(
       # Calculate hydrological information
-      elev_P50 = median(.data$elev, na.rm = TRUE),
-      flow_P50 = median(.data$turb_flow + .data$RO_flow + .data$spill_flow,
+      elev_P50 = stats::median(.data$elev, na.rm = TRUE),
+      flow_P50 = stats::median(.data$turb_flow + .data$RO_flow + .data$spill_flow,
         na.rm = TRUE),
       # Average flow rates
       qFPS_mean = mean(.data$FPS_flow, na.rm = TRUE),
@@ -53,7 +67,7 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
     ) %>%
     dplyr::ungroup() %>% # Remove grouping, re-group to only Month
     dplyr::group_by(.data$Month) %>%
-    dplyr::summarise(
+    dplyr::summarize(
       # Exceedance monthly
       exceedance_wse_feet = mean(.data$elev_P50),
       exceedance_flow_cfs = mean(.data$flow_P50),
@@ -98,7 +112,7 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
         lubridate::year(.data$Date))) %>%
       dplyr::left_join(y = param_list$water_year_types, by = "year") %>%
       dplyr::group_by(.data$year, .data$type) %>%
-      dplyr::summarise(
+      dplyr::summarize(
         # Average % fish distribution
         fbw_surv = sum(.data$passage_survRO, na.rm = TRUE) +
           sum(.data$passage_survTurb, na.rm = TRUE) +
@@ -111,26 +125,26 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
       dplyr::group_by(.data$type) %>%
       dplyr::summarize(
         avg_surv = mean(.data$fbw_surv),
-        p05_surv = quantile(.data$fbw_surv, probs = 0.05),
-        p10_surv = quantile(.data$fbw_surv, probs = 0.10),
-        p25_surv = quantile(.data$fbw_surv, probs = 0.25),
-        p50_surv = quantile(.data$fbw_surv, probs = 0.50),
-        p75_surv = quantile(.data$fbw_surv, probs = 0.75),
-        p90_surv = quantile(.data$fbw_surv, probs = 0.90),
-        p95_surv = quantile(.data$fbw_surv, probs = 0.95)
+        p05_surv = stats::quantile(.data$fbw_surv, probs = 0.05),
+        p10_surv = stats::quantile(.data$fbw_surv, probs = 0.10),
+        p25_surv = stats::quantile(.data$fbw_surv, probs = 0.25),
+        p50_surv = stats::quantile(.data$fbw_surv, probs = 0.50),
+        p75_surv = stats::quantile(.data$fbw_surv, probs = 0.75),
+        p90_surv = stats::quantile(.data$fbw_surv, probs = 0.90),
+        p95_surv = stats::quantile(.data$fbw_surv, probs = 0.95)
       )
     # For ALL years in the POR (period of record)
     survprob_por <- survprob %>%
       dplyr::ungroup() %>%
       dplyr::summarize(
         avg_surv = mean(.data$fbw_surv),
-        p05_surv = quantile(.data$fbw_surv, probs = 0.05),
-        p10_surv = quantile(.data$fbw_surv, probs = 0.10),
-        p25_surv = quantile(.data$fbw_surv, probs = 0.25),
-        p50_surv = quantile(.data$fbw_surv, probs = 0.50),
-        p75_surv = quantile(.data$fbw_surv, probs = 0.75),
-        p90_surv = quantile(.data$fbw_surv, probs = 0.90),
-        p95_surv = quantile(.data$fbw_surv, probs = 0.95)
+        p05_surv = stats::quantile(.data$fbw_surv, probs = 0.05),
+        p10_surv = stats::quantile(.data$fbw_surv, probs = 0.10),
+        p25_surv = stats::quantile(.data$fbw_surv, probs = 0.25),
+        p50_surv = stats::quantile(.data$fbw_surv, probs = 0.50),
+        p75_surv = stats::quantile(.data$fbw_surv, probs = 0.75),
+        p90_surv = stats::quantile(.data$fbw_surv, probs = 0.90),
+        p95_surv = stats::quantile(.data$fbw_surv, probs = 0.95)
       ) %>%
       dplyr::mutate(type = "Period of Record") %>%
       dplyr::bind_rows(survprob_wyt) %>%

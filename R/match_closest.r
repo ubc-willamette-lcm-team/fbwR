@@ -9,7 +9,6 @@
 #' @param nomatch The value to return if the difference between x and the
 #' closest value in the table is greater than the tolerance value
 #' @return Closest value in table to x.
-#' @export
 
 match_closest <- function(x, table, tolerance = Inf, nomatch = NA_integer_) {
   lIdx <- findInterval(x, table, rightmost.closed = FALSE, all.inside = TRUE)

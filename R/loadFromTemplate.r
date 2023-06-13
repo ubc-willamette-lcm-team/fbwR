@@ -1,10 +1,11 @@
 #' Loads FBW data from a defined template spreadsheet in XLSX format. 
 #' @param template_file File path to an Excel spreadsheet with standardized 
 #' inputs
-#' @import readxl
-#' @import dplyr
-#' @import lubridate
-#' 
+#' @importFrom readxl excel_sheets
+#' @importFrom readxl read_excel
+#' @importFrom dplyr select
+#' @importFrom dplyr %>%
+#' @importFrom rlang .data
 #' @export
 
 loadFromTemplate <- function(template_file) {

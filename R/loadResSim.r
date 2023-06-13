@@ -27,10 +27,12 @@
 #' through the spillway route. If not provided, defaults to `NULL` and
 #' the function will use the first sheet ending in "-spill"
 #' 
-#' @import dplyr
-#' @import tidyr
-#' @import readxl
-#' @import lubridate
+#' @importFrom dplyr select
+#' @importFrom dplyr starts_with
+#' @importFrom tidyr pivot_longer
+#' @importFrom readxl excel_sheets
+#' @importFrom readxl read_excel
+#' @importFrom lubridate year
 #' 
 #' @export
 
@@ -91,23 +93,20 @@ loadResSim <- function(infile, wide = TRUE,
                 current_colname <- paste0(names(ressim_list)[[l]], "_flow")
             }
             df_tmp <- ressim_list[[l]]
-            df_out <- data.frame(
-                tidyr::pivot_longer(df_tmp,
-                cols = starts_with("X"),
+            df_out <- data.frame(tidyr::pivot_longer(df_tmp,
+                cols = dplyr::starts_with("X"),
                 names_to = "year",
                 names_prefix = "X",
                 values_to = current_colname,
                 values_drop_na = FALSE))
             lubridate::year(df_out$Date) <- as.numeric(df_out$year)
-            ressim_list[[l]] <- df_out %>%
-              dplyr::select(-.data$year)
+            ressim_list[[l]] <-  dplyr::select(df_out, -year)
         }
     }
     ### DATA PROCESSING - merge ressim flow data:
     # Merge all of Elev, Outflow, PH, Spill, and URO by Date
     # Replaces column stacking, instead using Date as a key for pairing data
-    ressim_data <- Reduce(function(x, y)
+    Reduce(function(x, y)
         merge(x, y),
         ressim_list)
-    ressim_data
 }

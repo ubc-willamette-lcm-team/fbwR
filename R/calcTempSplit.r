@@ -10,7 +10,11 @@
 #' reflecting which dates have what percent of the outflow will be redirected
 #' for temperature control operations). Flow through the fish passage structure
 #' is calculated as outflow * (1 - proportion redirected to temperature control)
-#' @import lubridate
+#' 
+#' @importFrom lubridate %within%
+#' @importFrom lubridate year
+#' @importFrom lubridate interval
+#' @export
 
 calcTempSplit <- function(ressim_data, water_year_types, temp_dist_df){
     # Create an output data frame
@@ -31,14 +35,14 @@ calcTempSplit <- function(ressim_data, water_year_types, temp_dist_df){
         origin_date <- lower_date # Make a copy for later
         # Iterate over these rows
         for (r in 2:nrow(temp_dist_df)) {
-            upper_date <- temp_dist_df$Date[r]-1
+            upper_date <- temp_dist_df$Date[r] - 1
             lubridate::year(upper_date) <- yr
             date_interval <- lubridate::interval(lower_date, upper_date)
             tempSplitOut$split[which(tempSplitOut$Date %within% date_interval)] <- temp_dist_df[r-1,typeCol]
             lower_date <- upper_date + 1
         }
         # Now, finish up with the final interval (lower_date to the original date of the next year)
-        lubridate::year(origin_date) <- lubridate::year(origin_date)+1
+        lubridate::year(origin_date) <- lubridate::year(origin_date) + 1
         # New interval
         date_interval <- lubridate::interval(lower_date, origin_date)
         # Here, 'r' is saved from the iterator above and can be used at its highest value

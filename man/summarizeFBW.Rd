@@ -19,7 +19,7 @@ the percent of fish approaching a dam in each month.}
 }
 \value{
 A list containing two objects: a summary by month, and a summary
-by water year type in the period of record, including quantiles.
+by water year type in the period of record, including stats::quantiles.
 }
 \description{
 Summarize daily FBW outputs into by-month and by-water-year-type summarize.

@@ -36,12 +36,19 @@
 #'   mortality is applied).
 #' 4. If `rereg` is equal to "Y": `rereg_mort`, a single numeric value of the
 #'   mortality rate associated with reregulation (i.e., 1 - survival).
-#' @export
 #'
-#' @import dplyr
+#' @importFrom dplyr mutate
+#' @importFrom dplyr %>%
+#' @importFrom dplyr case_when
+#' @importFrom dplyr rename
+#' @importFrom dplyr across
+#' @importFrom dplyr sym
 #' @importFrom rlang :=
+#' @importFrom rlang .data
+#' 
+#' @export
 
-distributeFlow_Survival_gates <- function(fish_distributed_outlets, 
+distributeFlow_Survival_gates <- function(fish_distributed_outlets,
   param_list) {
   resv_data <- param_list$route_specs
   # Loop through the outlet types to determine flow and survival through each
@@ -74,7 +81,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         dplyr::mutate("{structure}_survival" := 0)
       next
     }
-    # If there is a survival value given, and survival is NOT calculated 
+    # If there is a survival value given, and survival is NOT calculated
     # according to a table, use that point value.
     if (!is.na(structure_surv) && tolower(structure_surv) != "table") {
       structure_surv <- as.numeric(structure_surv)
@@ -92,14 +99,14 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       if (resv_data_sub$n_gates > 1) {
         # Check that a method has been provided
         stopifnot(
-          resv_data_sub$n_gates > 1 &
+          resv_data_sub$n_gates > 1 &&
           resv_data_sub$method %in% c("Equal Q", "Min Q to equal", "Unit to Max Q",
             "Target Q", "Peaking Performance")
       )}
       # Pull out the survival by flow table
       surv_table <- data.frame(param_list[[paste0(structure, "_surv_table")]]) %>%
         # Coerce into numeric type
-        dplyr::mutate(across(everything(), as.numeric))
+        dplyr::mutate(dplyr::across(dplyr::everything(), as.numeric))
       # Check if there is a gate method provided, if not quit.
       if (is.na(resv_data_sub$gate_method)) {
         stop(paste0("No gate method provided for ", structure))
@@ -524,16 +531,16 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           !! sym(paste0(structure, "_survival_pre_rereg")) * (1 - as.numeric(
         param_list$alt_desc[["rereg_mortality"]])))
     } 
-    # Otherwise leave the current survival column
-    ### FINAL STEP: If the elevation of the outlet is inappropriate, 0 survival!!!
+    ### FINAL STEP: If the elevation of the outlet is inappropriate, 0 survival
     # From the VBA module: 
-    # ' If the current elevation is below the minimum elevation, no fish can pass
-    # ' This is not how the original code was written, but it was an error in the original code
-    # ' Or If there is no flow, there will be no fish
-    # If Ele_Pool_Array(GetDate, GetYear) < outletData(2, outletIndex) Or outletFlow = 0 Then
-    #     getSurvivalPercent = 0
-    #     GoTo 3
-    # End If
+    ## If the current elevation is below the minimum elevation, no fish can pass
+    ## This is not how the original code was written, but it was an error in the
+    ##  original code
+    # Or If there is no flow, there will be no fish
+    #If Ele_Pool_Array(GetDate, GetYear) < outletData(2, outletIndex) Or outletFlow = 0 Then
+    #    getSurvivalPercent = 0
+    #    GoTo 3
+    #End If
   bottom_elev <- resv_data_sub$bottom_elev
   if (is.na(bottom_elev) || identical(bottom_elev, character(0))) {
     bottom_elev <- 0
@@ -542,7 +549,8 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
     dplyr::mutate("{structure}_minelev" := case_when(
       .data$elev < bottom_elev ~ 0,
       TRUE ~ 1
-    )) %>% dplyr::mutate("{structure}_survival" := !!
+    )) %>%
+    dplyr::mutate("{structure}_survival" := !!
       sym(paste0(structure, "_survival")) *
       !! sym(paste0(structure, "_minelev"))
     )

@@ -25,15 +25,24 @@
 #' containing the calculated proportion of fry, sub-yearlings, and yearlngs
 #' approaching the dam on each day
 #' 
-#' @import dplyr
-#' @import lubridate
+#' @importFrom dplyr %>%
+#' @importFrom dplyr mutate
+#' @importFrom dplyr select
+#' @importFrom dplyr group_by
+#' @importFrom dplyr ungroup
+#' @importFrom dplyr case_when
+#' @importFrom dplyr left_join
+#' @importFrom lubridate days_in_month
+#' @importFrom lubridate year
+#' @importFrom lubridate month
+#' @importFrom rlang .data
+#' 
 #' @export
 
 distributeFishDaily <- function(ressim, param_list, verbose = FALSE) {
-  ressim_tmp <- ressim %>%
-    # First, calculate days in month as days_in_month column
-    dplyr::mutate(
-      days_in_month = lubridate::days_in_month(Date))
+  # First, calculate days in month as days_in_month column
+  ressim_tmp <- dplyr::mutate(ressim,
+    days_in_month = lubridate::days_in_month(.data$Date))
   leap_dates <- which(day(ressim$Date) == 29 & month(ressim$Date) == 2)
   # Skip leap years
   if (identical(leap_dates, integer(0))) {
@@ -45,7 +54,7 @@ distributeFishDaily <- function(ressim, param_list, verbose = FALSE) {
   }
   ressim_tmp <- ressim_tmp %>%
     dplyr::mutate(
-      YrMo = paste0(lubridate::year(.data$Date), "-", 
+      YrMo = paste0(lubridate::year(.data$Date), "-",
         lubridate::month(.data$Date)),
       Month = lubridate::month(.data$Date, label = TRUE, abbr = TRUE)) %>%
     # Then calculate year-month statistics (mean and total outflow)

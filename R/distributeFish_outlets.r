@@ -37,8 +37,14 @@
 #' intermediate variables like the proportion of flow through each outlet, route
 #' effectiveness, and fish-bearing flow are output.
 #' 
-#' @import dplyr
-#' @import lubridate 
+#' @importFrom dplyr %>%
+#' @importFrom dplyr mutate
+#' @importFrom dplyr select
+#' @importFrom rlang .data
+#' @importFrom lubridate day
+#' @importFrom lubridate month
+#' @importFrom lubridate year
+#' 
 #' @export
 
 distributeFish_outlets <- function(fish_postDPE, param_list, 
@@ -127,7 +133,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
         }
     } else if (fps == "FISH WEIR") {
       # First check that the weir date is appropriate - issue warning if dates missing
-      if(all(dim(param_list$alt_desc[["weir_start_date"]]) == c(0, 0)) ||
+      if (all(dim(param_list$alt_desc[["weir_start_date"]]) == c(0, 0)) |
         all(dim(param_list$alt_desc[["weir_end_date"]]) == c(0, 0))) {
         warning("Weir start date and/or end date are missing, assuming weir active all year.")
         fish_to_passFPS <- fish_to_passFPS %>%
@@ -158,19 +164,21 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
           stop("Weir end date must be a date in %d-%m format (e.g., 25-05 for the 25th of May)\n")
         })
         # If the start date falls "after" the end date, push the start date backwards an extra year 
-        if (month(startdate) >= month(enddate) ||
-          (day(startdate) > day(enddate) && month(startdate) == month(enddate))
+        if (lubridate::month(startdate) >= lubridate::month(enddate) ||
+          (lubridate::day(startdate) > lubridate::day(enddate) &&
+            lubridate::month(startdate) == lubridate::month(enddate))
           ) {
-          year(startdate) <- year(startdate) - 1
+          lubridate::year(startdate) <- lubridate::year(startdate) - 1
         }
         # daily_weir is a sequence of dates during which the weir is active
         daily_weir <- seq(from = startdate, to = enddate, by = "day")
         # Convert to month-date format
-        daily_weir_md <- paste0(month(daily_weir), "-", day(daily_weir))
+        daily_weir_md <- paste0(lubridate::month(daily_weir), "-", 
+          lubridate::day(daily_weir))
         # Add binary weir column
         fish_to_passFPS <- fish_to_passFPS %>%
           dplyr::mutate(
-            MoDay = paste0(month(.data$Date), "-", day(.data$Date)),
+            MoDay = paste0(lubridate::month(.data$Date), "-", day(.data$Date)),
             # Here, weir_boolean = 1 if in the active date range, 0 if not
             weir_boolean = ifelse(.data$MoDay %in% daily_weir_md, 1, 0),
             # Take the minimum of qMax or spillway flow,
