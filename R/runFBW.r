@@ -49,7 +49,7 @@ runFBW <- function(template_file = NULL, param_list = NULL,
       param_list = param_list, verbose = verbose))
   # Calculate DPE
   fish_daily_postDPE <- dplyr::mutate(fish_daily,
-      dpe = fbwR::fetchDPE(.data, 
+      dpe = fbwR::fetchDPE(fish_daily,
         param_list = param_list)$dam_passage_efficiency,
       # Multiply approaching population by dam passage efficiency
       approaching_daily_postDPE = .data$approaching_daily * .data$dpe
@@ -64,7 +64,7 @@ runFBW <- function(template_file = NULL, param_list = NULL,
     param_list = param_list)
   # Perform final calculations, multiplying survival by the proportion of fish 
   #   in outlet X (F.X)
-  fish_passage_survival <-  dplyr::mutate(route_survival_rates, 
+  fish_passage_survival <-  dplyr::mutate(route_survival_rates,
       passage_survRO = .data$ro_survival * .data$F.RO,
       passage_survTurb = .data$turb_survival * .data$F.turb,
       passage_survSpill = .data$spill_survival * .data$F.spill,
