@@ -100,7 +100,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
         # Check that a method has been provided
         stopifnot(
           resv_data_sub$n_gates > 1 &&
-          resv_data_sub$method %in% c("Equal Q", "Min Q to equal", "Unit to Max Q",
+          resv_data_sub$gate_method %in% c("Equal Q", "Min Q to equal", "Unit to Max Q",
             "Target Q", "Peaking Performance")
       )}
       # Pull out the survival by flow table
