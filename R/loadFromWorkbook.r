@@ -179,7 +179,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   )
   rownames(route_specs) <- c("RO", "Turb", "Spill", "FPS")
 
-  route_eff <- data.frame(
+  route_eff_resv <- data.frame(
     q_ratio = seq(0, 1, by = 0.1),
     Spill = as.numeric(unlist(resvsheet[48:58,
       which(colnames(resvsheet) == reservoir)])),
@@ -192,6 +192,26 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     Turb = as.numeric(unlist(resvsheet[72:82,
       which(colnames(resvsheet) == reservoir)]))
   )
+  route_eff_effsheet <- suppressMessages(readxl::read_excel(fbw_excel,
+    sheet = "Effectiveness", range = "A2:E13")) %>%
+    dplyr::rename(
+      q_ratio = `Flow Ratio`,
+      Spill = Spillway, 
+      FPS = `Fish Pass`,
+      RO = RO,
+      Turb = Turbine)
+  if (
+    # !identical(route_eff_effsheet$q_ratio, route_eff_resv$q_ratio) ||
+    !identical(route_eff_effsheet$Spill, route_eff_resv$Spill) ||
+    !identical(route_eff_effsheet$FPS, route_eff_resv$FPS) ||
+    !identical(route_eff_effsheet$RO, route_eff_resv$RO) ||
+    !identical(route_eff_effsheet$Turb, route_eff_resv$Turb)
+  ) {
+    warning("Route effectiveness mismatches between ResvData and Effectiveness tabs! Using values defined in the Route Effectiveness sheet.")
+    route_eff <- route_eff_effsheet
+  } else {
+    route_eff <- route_eff_resv
+  }
   # DPE range includes some number of elevation inputs
   resvnames <- which(!is.na(resvsheet$`Raw Data Sheet Names`))
   names(resvnames) <- resvsheet$`Raw Data Sheet Names`[resvnames]
@@ -279,12 +299,12 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     sheet = "Route Survival Model", range = "A36:E48", col_names = T))
   monthly_runtiming_rsm <- data.frame(rsm_timing %>%
     dplyr::rename(
-      Date = .data$Month,
-      approaching_baseline = .data$Baseline1,
-      approaching_alternative = .data$`Estimated with Downstream Passage2`
+      Date = "Month",
+      approaching_baseline = "Baseline1",
+      approaching_alternative = "Estimated with Downstream Passage2"
     ) %>%
-    dplyr::select(.data$Date, .data$approaching_baseline,
-      .data$approaching_alternative))
+    dplyr::select("Date", "approaching_baseline",
+      "approaching_alternative"))
   if (!identical(monthly_runtiming_rsm$approaching_baseline,
       monthly_runtiming_resv$approaching_baseline) ||
     !identical(monthly_runtiming_rsm$approaching_alternative,
@@ -401,7 +421,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       DEFICIT = .data$hotdry,
       INSUFFICIENT = (.data$normal + .data$hotdry) / 2
     ) %>%
-    dplyr::select(-c(.data$coolwet, .data$normal, .data$hotdry)) %>%
+    dplyr::select(-c("coolwet", "normal", "hotdry")) %>%
     # Remove any all-NA rows
     dplyr::filter_all(dplyr::any_vars(!is.na(.data)))
   }
