@@ -107,6 +107,5 @@ loadResSim <- function(infile, wide = TRUE,
     # Merge all of Elev, Outflow, PH, Spill, and URO by Date
     # Replaces column stacking, instead using Date as a key for pairing data
     Reduce(function(x, y)
-        merge(x, y),
-        ressim_list)
+        merge(x, y, by = "Date"), ressim_list)
 }
