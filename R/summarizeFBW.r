@@ -40,10 +40,9 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
   #    together between years.
   # To do this, all dates in groupingDate have the same (arbitrary) year
   lubridate::year(summary$groupingDate) <- 2000
-  # Start summarizing
+  # Start summarizing by month
   summary_revised <- summary %>%
-    # dplyr lets you summarize by grouping variables:
-    #   Here, group by month and "dummy" date
+    # Summary 1: By month (see Route Survival Model) 
     dplyr::group_by(.data$groupingDate, .data$Month) %>%
     dplyr::summarize(
       # Calculate hydrological information
@@ -106,6 +105,7 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
       dplyr::mutate(Month = factor(.data$Month, levels = c("Sep", "Oct", "Nov",
         "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"))) %>%
       dplyr::arrange(.data$Month)
+    # Summary 2: By water year type
     # Summary by water year type - computed survival probabilities
     #   First, for all years in the period of record
     survprob <- fish_passage_survival %>%
@@ -116,7 +116,7 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
       dplyr::group_by(.data$year, .data$type) %>%
       dplyr::summarize(
         # Average % fish distribution
-        fbw_surv = sum(.data$passage_survRO, na.rm = TRUE) +
+        dam_passage_survival = sum(.data$passage_survRO, na.rm = TRUE) +
           sum(.data$passage_survTurb, na.rm = TRUE) +
           sum(.data$passage_survSpill, na.rm = TRUE) +
           sum(.data$passage_survFPS, na.rm = TRUE)
@@ -151,9 +151,36 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
       dplyr::mutate(type = "Period of Record") %>%
       dplyr::bind_rows(survprob_wyt) %>%
       dplyr::relocate(.data$type)
+    # Summary 3: toSLAM style summary of passage survival, 1-DPE, concrete survival
+    toslam <- fish_passage_survival %>%
+          # Merge years and water year type data
+          dplyr::mutate(year = as.character(
+            lubridate::year(.data$Date))) %>%
+          dplyr::group_by(.data$year) %>%
+          dplyr::summarize(
+            # This is DPE * DPS
+            `FBW survival` = sum(.data$passage_survRO, na.rm = TRUE) +
+              sum(.data$passage_survTurb, na.rm = TRUE) +
+              sum(.data$passage_survSpill, na.rm = TRUE) +
+              sum(.data$passage_survFPS, na.rm = TRUE),
+            # Average % fish distribution
+            # The forebay population is 1-DPE
+            `1-DPE` = sum(.data$F.NoPass, na.rm = T),
+            # Passage survival itself
+            `Passage Survival` = (sum(.data$passage_survRO, na.rm = TRUE) +
+              sum(.data$passage_survTurb, na.rm = TRUE) +
+              sum(.data$passage_survSpill, na.rm = TRUE) +
+              sum(.data$passage_survFPS, na.rm = TRUE)) / 
+              (sum(.data$F.RO, na.rm = TRUE) +
+              sum(.data$F.turb, na.rm = TRUE) +
+              sum(.data$F.spill, na.rm = TRUE) +
+              sum(.data$F.FPS, na.rm = TRUE))
+          )
+    # Supply attributes and return the summary list
     summarized_fbw <- list(
       monthly_summary = summary_by_month,
-      wyt_surv_summary = survprob_por
+      wyt_surv_summary = survprob_por,
+      toSLAM = toslam
     )
     attr(summarized_fbw, "inputData") <- list(
       param_list = param_list,
