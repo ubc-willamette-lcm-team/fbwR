@@ -28,6 +28,8 @@
 #' @export
 
 summarizeFBW <- function(fish_passage_survival, param_list) {
+  param_list <- attributes(fish_passage_survival)$inputData$param_list
+  ressim <- attributes(fish_passage_survival)$inputData$ressim
   # Many parameters have to be summarized first by grouping into days of year
   # e.g., to match all January 1st's.
   summary <- fish_passage_survival %>%
@@ -149,9 +151,12 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
       dplyr::mutate(type = "Period of Record") %>%
       dplyr::bind_rows(survprob_wyt) %>%
       dplyr::relocate(.data$type)
-    return(list(
+    summarized_fbw <- list(
       monthly_summary = summary_by_month,
       wyt_surv_summary = survprob_por
     )
-  )
+    attr(summarized_fbw, "inputData") <- list(
+      param_list = param_list,
+      ressim = ressim)
+    return(summarized_fbw)
 }
