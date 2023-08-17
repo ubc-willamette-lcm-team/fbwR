@@ -72,6 +72,9 @@ runFBW <- function(template_file = NULL, param_list = NULL,
       passage_survAllRoutes = .data$passage_survRO + .data$passage_survTurb +
         .data$passage_survSpill + .data$passage_survFPS
     )
+  
+  attr(fish_passage_survival, "inputData") <- list(param_list = param_list, ressim = ressim)
+  
     if (summarize == FALSE) {
       return(fish_passage_survival)
     } else {
