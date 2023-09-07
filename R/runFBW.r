@@ -44,9 +44,6 @@ runFBW <- function(template_file = NULL, param_list = NULL,
       "...Loading parameters from template file: ", basename(template_file)))
     param_list <- fbwR::loadFromTemplate(template_file = template_file)
   }
-  #!# Here: create a list that holds all of the results, one entry per FBW run
-  #!# Something like this:
-  #!# return_list <- list(rep(ressim, nsim))
   # Distribute fish population into daily passing populations
   fish_daily <- data.frame(fbwR::distributeFishDaily(ressim,
       param_list = param_list, verbose = verbose))
@@ -75,9 +72,6 @@ runFBW <- function(template_file = NULL, param_list = NULL,
       passage_survAllRoutes = .data$passage_survRO + .data$passage_survTurb +
         .data$passage_survSpill + .data$passage_survFPS
     )
-  
-  attr(fish_passage_survival, "inputData") <- list(param_list = param_list, ressim = ressim)
-  
     if (summarize == FALSE) {
       return(fish_passage_survival)
     } else {
