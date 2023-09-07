@@ -116,7 +116,7 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
       dplyr::group_by(.data$year, .data$type) %>%
       dplyr::summarize(
         # Average % fish distribution
-        dam_passage_survival = sum(.data$passage_survRO, na.rm = TRUE) +
+        fbw_surv = sum(.data$passage_survRO, na.rm = TRUE) +
           sum(.data$passage_survTurb, na.rm = TRUE) +
           sum(.data$passage_survSpill, na.rm = TRUE) +
           sum(.data$passage_survFPS, na.rm = TRUE)
