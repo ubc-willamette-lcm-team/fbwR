@@ -25,18 +25,19 @@
 
 fetchDPE <- function(ressim, param_list) {
   # First, check to see what kind of DPE data we need (only baseline, FSS, etc.)
+  stopifnot("collector" %in% names(param_list[["alt_desc"]]))
   fps_type <- param_list$alt_desc[["collector"]]
   # Isolate the FPS row from the route_spec object
   fps_specs <- param_list$route_specs[which(rownames(
     param_list$route_specs) == "FPS"), ]
-  # Check for min/max elevation for the fish passage structure: 
-  #   If the elevation is not right, the baseline DPE will be used.
-  if (fps_type == "NONE" || is.na(param_list$alt_desc[["dpe_column_name"]]) ||
+  if (is.na(param_list$alt_desc[["dpe_column_name"]]) ||
     identical(param_list$alt_desc[["dpe_column_name"]], character(0))) {
     elevmin_FPS <- Inf # By making the minimum elevation infinite, only the
     # baseline will be applied
     elevmax_FPS <- -Inf
   } else {
+  # Check for min/max elevation for the fish passage structure: 
+  #   If the elevation is not right, the baseline DPE will be used.
     # If max elevation for the FPS is blank/empty, set to -Inf
     elevmax_FPS <- ifelse(identical(param_list$alt_desc[["fps_max_elev"]],
       numeric(0)) || is.na(param_list$alt_desc[["fps_max_elev"]]),

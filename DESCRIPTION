@@ -33,10 +33,14 @@ Imports:
   stats,
   tidyr 
 Depends: R (>= 4.3)
-Suggests: knitr, rmarkdown
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 NeedsCompilation: no
 Packaged: 2023-04-28 18:48:30 UTC; mdeith
 Author: Mairin Deith [aut, cre]
 Maintainer: Mairin Deith <mairin.deith@gmail.com>
 License: MIT + file LICENSE
+Config/testthat/edition: 3

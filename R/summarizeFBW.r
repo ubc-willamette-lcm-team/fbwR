@@ -3,10 +3,6 @@
 #' daily estimates of at least flow rates, survival rates, pool elevation,
 #' and distribution of fish within the dam's routes. This can be created by 
 #' runFBW() if summarize is set to FALSE.
-#' @param param_list A list including at least the following named objects: 
-#' `water_year_type`, including each year in the period of records and its 
-#' water year type classification; and `monthly_runtiming`, a dataframe of 
-#' the percent of fish approaching a dam in each month.
 #' @return A list containing two objects: a summary by month, and a summary
 #' by water year type in the period of record, including stats::quantiles.
 #'  
@@ -27,7 +23,7 @@
 #' @importFrom rlang .data
 #' @export
 
-summarizeFBW <- function(fish_passage_survival, param_list) {
+summarizeFBW <- function(fish_passage_survival) {
   # Many parameters have to be summarized first by grouping into days of year
   # e.g., to match all January 1st's.
   summary <- fish_passage_survival %>%
@@ -82,7 +78,7 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
       meanTurb_pop = sum(.data$dailyMeanTurb_pop),
       meanRO_pop = sum(.data$dailyMeanRO_pop),
       meanSpill_pop = sum(.data$dailyMeanSpill_pop),
-      # Average % fish distribution
+      # Average % fish survival
       avgDPS_FPS = sum(.data$dailyMeanFPS_surv),
       avgDPS_PH = sum(.data$dailyMeanTurb_surv),
       avgDPS_RO = sum(.data$dailyMeanRO_surv),
@@ -91,7 +87,7 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
     # Percent fish approaching
     summary_by_month <- dplyr::left_join(
       x = summary_revised,
-      y = param_list$monthly_runtiming %>%
+      y = attributes(fish_passage_survival)$param_list$monthly_runtiming %>%
         dplyr::mutate(Month = as.character(lubridate::month(.data$Date,
           label = TRUE, abbr = TRUE))) %>%
         dplyr::select(-.data$Date),
@@ -104,13 +100,14 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
       dplyr::mutate(Month = factor(.data$Month, levels = c("Sep", "Oct", "Nov",
         "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"))) %>%
       dplyr::arrange(.data$Month)
+    
     # Summary by water year type - computed survival probabilities
     #   First, for all years in the period of record
     survprob <- fish_passage_survival %>%
       # Merge years and water year type data
       dplyr::mutate(year = as.character(
         lubridate::year(.data$Date))) %>%
-      dplyr::left_join(y = param_list$water_year_types, by = "year") %>%
+      dplyr::left_join(y = attributes(fish_passage_survival)$param_list$water_year_types, by = "year") %>%
       dplyr::group_by(.data$year, .data$type) %>%
       dplyr::summarize(
         # Average % fish distribution
@@ -149,7 +146,22 @@ summarizeFBW <- function(fish_passage_survival, param_list) {
       dplyr::mutate(type = "Period of Record") %>%
       dplyr::bind_rows(survprob_wyt) %>%
       dplyr::relocate(.data$type)
-    return(list(
+      
+  # Finally, group by year in the period of record
+  weekly_survprob <- fish_passage_survival %>%
+      # Merge years and water year type data
+      dplyr::mutate(
+        fbw_passageSurvRate = passage_survAllRoutes/approaching_daily,
+        year = as.character(lubridate::year(.data$Date))) %>%
+      dplyr::left_join(y = attributes(fish_passage_survival)$param_list$water_year_types, by = "year") %>%
+      dplyr::group_by(.data$year, .data$type, week=lubridate::week(.data$Date)) %>%
+      dplyr::summarize(
+        # Average % fish distribution
+        fbw_surv_rate_mean = mean(fbw_passageSurvRate, na.rm = T),
+        fbw_surv_rate_sd = sd(fbw_passageSurvRate, na.rm = T)
+      )
+
+  return(list(
       monthly_summary = summary_by_month,
       wyt_surv_summary = survprob_por
     )

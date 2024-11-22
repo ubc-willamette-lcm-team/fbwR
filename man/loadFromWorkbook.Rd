@@ -7,7 +7,13 @@ reservoir and the name of the quickset. If none are given, the reservoir
 name and quickset name are read from the "Route Survival Model" landing page
 of the FBW workbook.}
 \usage{
-loadFromWorkbook(fbw_excel, reservoir = NULL, quickset = NULL)
+loadFromWorkbook(
+  fbw_excel,
+  reservoir = NULL,
+  quickset = NULL,
+  year_override = FALSE,
+  forced_year_range = NULL
+)
 }
 \arguments{
 \item{fbw_excel}{Character string referencing the location of the Excel file
@@ -23,6 +29,15 @@ sheet in \code{fbw_excel}.}
 lookup which entries of the QuickSets sheet should be loaded into FBW.
 If not \code{reservoir} and \code{quickset} are not provided, \code{quickset} is read from
 cell B7 of the Route Survival Model sheet in \code{fbw_excel}.}
+
+\item{year_override}{Useful for debugging; should mismatches in years be
+overridden by the script? This forces the years to match the defined period
+of record defined in \code{forced_year_range}. Defaults to FALSE, such that errors are returned
+when there are year mismatches.}
+
+\item{forced_year_range}{Useful for debugging; forcibly set the years in the
+period of record; all ResSim and other FBW inputs that do not conform to the
+period of record are forced to have this span.}
 }
 \value{
 A list of parameters required to run the FBW model in R.

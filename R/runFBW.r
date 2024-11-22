@@ -30,19 +30,27 @@
 runFBW <- function(template_file = NULL, param_list = NULL,
   ressim_file = NULL, ressim = NULL, ressim_wide = TRUE,
   summarize = FALSE, verbose = FALSE) {
-  if (!is.null(ressim)) {
-    message("...Using provided ResSim inputs")
-  } else {
+  if (!(is.null(ressim))) {
+    if (!(is.null(ressim)) & !(is.null(ressim_file))) {
+      warning("Both `ressim` and `ressim_file` provided as arguments to runFBW(); using `ressim`")
+    }
+  } else if (!(is.null(ressim_file))) {
     message(paste0(
       "...Loading ResSim from file: ", basename(ressim_file)))
-    ressim <- fbwR::loadResSim(infile = ressim_file, wide = ressim_wide)
+      ressim <- fbwR::loadResSim(infile = ressim_file, wide = ressim_wide)
+  } else {
+    stop("One of param_list or template_file must be provided to runFBW")
   }
   if (!is.null(param_list)) {
-    message("...Using provided param_list inputs")
-  } else {
+    if (!(is.null(template_file)) & !(is.null(param_list))) {
+      warning("Both `param_list` and `template_file` provided as arguments to runFBW(); using `param_list`")
+    }
+  } else if (!(is.null(template_file))) {
     message(paste0(
       "...Loading parameters from template file: ", basename(template_file)))
     param_list <- fbwR::loadFromTemplate(template_file = template_file)
+  } else {
+    stop("One of param_list or template_file must be provided to runFBW")
   }
   # Distribute fish population into daily passing populations
   fish_daily <- data.frame(fbwR::distributeFishDaily(ressim,
@@ -72,9 +80,10 @@ runFBW <- function(template_file = NULL, param_list = NULL,
       passage_survAllRoutes = .data$passage_survRO + .data$passage_survTurb +
         .data$passage_survSpill + .data$passage_survFPS
     )
+    attr(fish_passage_survival, "param_list") <- param_list
     if (summarize == FALSE) {
       return(fish_passage_survival)
     } else {
-      return(summarizeFBW(fish_passage_survival, param_list))
+      return(summarizeFBW(fish_passage_survival))
     }
 }

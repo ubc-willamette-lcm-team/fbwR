@@ -13,6 +13,13 @@
 #' lookup which entries of the QuickSets sheet should be loaded into FBW.
 #' If not `reservoir` and `quickset` are not provided, `quickset` is read from
 #' cell B7 of the Route Survival Model sheet in `fbw_excel`.
+#' @param year_override Useful for debugging; should mismatches in years be 
+#' overridden by the script? This forces the years to match the defined period
+#' of record defined in `forced_year_range`. Defaults to FALSE, such that errors are returned 
+#' when there are year mismatches.
+#' @param forced_year_range Useful for debugging; forcibly set the years in the
+#' period of record; all ResSim and other FBW inputs that do not conform to the 
+#' period of record are forced to have this span.
 #' @return A list of parameters required to run the FBW model in R.
 #'
 #' @importFrom dplyr rename
@@ -25,7 +32,8 @@
 #' @importFrom rlang .data
 #' @export
 
-loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
+loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL,
+  year_override = FALSE, forced_year_range = NULL) {
   # If reservoir is NULL, let's read both the quickset and reservoir
   reservoir <- ifelse(is.null(reservoir),
     # If null, read it in
@@ -63,6 +71,9 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
   qset_subset <- qset_subset[which(qset_subset$`Quick Set Name` == quickset), ]
   # The column of route effectiveness to be used is indicated with an "X"
   #   Find it
+  if (nrow(qset_subset) > 1) {
+    stop(paste0("Multiple entries in `QuickSets` matches `", quickset, "`"))
+  }
   route_eff_x_column <- which(toupper(
     c(qset_subset$`...37`, qset_subset$`...38`,
         qset_subset$`...39`, qset_subset$`...40`)) == "X")
@@ -127,7 +138,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     weir_end_date = as.character(weir_dates[[1]][2])
   )
   if (
-    !(alt_desc_list_rsm$fp_alternative == alt_desc_list$fp_alternative) ||
+    # !(alt_desc_list_rsm$fp_alternative == alt_desc_list$fp_alternative) ||
     !(alt_desc_list_rsm$nets == alt_desc_list$nets) ||
     !(alt_desc_list_rsm$collector == alt_desc_list$collector) ||
     !(alt_desc_list_rsm$rereg == alt_desc_list$rereg) ||
@@ -178,7 +189,8 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     normally_used = normally_used_check
   )
   rownames(route_specs) <- c("RO", "Turb", "Spill", "FPS")
-
+  # This is for checking
+  route_specs$n_gates[which(is.na(route_specs$n_gates))] <- 0
   route_eff_resv <- data.frame(
     q_ratio = seq(0, 1, by = 0.1),
     Spill = as.numeric(unlist(resvsheet[48:58,
@@ -313,7 +325,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     warning("Monthly run timing mismatches between ResvData and Route Survival Model sheets! Using values defined in the Route Survival Model sheet.")
   }
   # Survival tables
-  ro_surv_table <- na.omit(data.frame(
+  ro_surv_raw <- data.frame(
     flow = as.numeric(unlist(resvsheet[
       (resvnames["RO Surv Q"] + 1):
       (resvnames["RO Low Pool Surv"] - 1),
@@ -326,7 +338,9 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       (resvnames["RO High Pool Surv"] + 1):
       (resvnames["Turb Surv Q"] - 1),
       which(colnames(resvsheet) == reservoir)]))
-  ))
+  )
+  # Filter to rows with any non-NA values
+  ro_surv_table <- ro_surv_raw[rowSums(is.na(ro_surv_raw)) < 3, ]
   ro_elevs <- data.frame(
     param = c("ro_lower_elev", "ro_upper_elev"),
     value = as.numeric(c(
@@ -336,7 +350,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
         which(colnames(resvsheet) == reservoir)]
       ))
   )
-  turb_surv_table <- na.omit(data.frame(
+  turb_surv_raw <- data.frame(
     flow = as.numeric(unlist(resvsheet[
       (resvnames["Turb Surv Q"] + 1):
       (resvnames["Turb Surv"] - 1),
@@ -345,7 +359,9 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
       (resvnames["Turb Surv"] + 1):
       (resvnames["Spill Surv Q"] - 1),
       which(colnames(resvsheet) == reservoir)]))
-  ))
+  )
+  # Filter to rows where there are less than 2 NAs (i.e., some value)
+  turb_surv_table <- turb_surv_raw[rowSums(is.na(turb_surv_raw)) < 2, ]
   spill_surv_table <- na.omit(data.frame(
     flow = as.numeric(unlist(resvsheet[
       (resvnames["Spill Surv Q"] + 1):
@@ -371,6 +387,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     readxl::read_excel(fbw_excel, sheet = "TEMP-SPLIT"))
   # wow this is a lot of work to modify column names
   year_types <- sapply(colnames(tempsplit)[-1], function(X) {
+    # Remove the "X"
     substring(X, first = 1,
       last = regexpr(X, pattern = "...", fixed = TRUE)[1] - 1)})
   # There will be some extra columns which begin with ".." now, remove these
@@ -381,6 +398,18 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     year = names(year_types),
     type = unlist(year_types)
   )
+    # Check for years in the water year type data
+  if (!is.null(forced_year_range) && year_override) {
+    if (!all(as.numeric(water_year_types$year) %in% forced_year_range)) {
+      warning("Water year types in the period of record do not match the years in
+      `forced year range`, (", min(forced_year_range), ":", max(forced_year_range), ").")
+      if (nrow(water_year_types) != length(forced_year_range)) {
+        stop("Number of years in `forced_year_range` does not match number of rows in the water year type table")
+      } else {
+        water_year_types$year <- forced_year_range
+      }
+    }
+  }
   # Temperature distributions need to be looked up from
   # a series of columns
   # which(tempsplit[2, ] == "Active Reservoir:") + 2
@@ -426,7 +455,7 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     dplyr::filter_all(dplyr::any_vars(!is.na(.data)))
   }
   # Compile into named list
-  list(
+  param_list <- list(
     "alt_desc" = alt_desc_list,
     "route_specs" = route_specs,
     "route_eff" = route_eff,
@@ -442,4 +471,9 @@ loadFromWorkbook <- function(fbw_excel, reservoir = NULL, quickset = NULL) {
     "reservoir" = reservoir,
     "quickset" = quickset
   )
+  attr(param_list, "fbwExcel_infile") <- fbw_excel
+  attr(param_list, "year_override") <- year_override
+  attr(param_list, "forced_year_range") <- ifelse(is.null(forced_year_range), NA, 
+    paste0(min(forced_year_range), ":", max(forced_year_range)))
+  return(param_list)
 }

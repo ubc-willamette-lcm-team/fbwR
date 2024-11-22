@@ -71,7 +71,7 @@ distributeFishDaily <- function(ressim, param_list, verbose = FALSE) {
   if (param_list$alt_desc[["fp_alternative"]] == "Y") {
     fish_approaching <- data.frame(
       # Convert the date column into month only (instead of dyt format)
-      Month = lubridate::month(param_list$monthly_runtiming$Date,
+      Month = lubridate::month(param_list$monthly_runtiming[["Date"]],
       # Use an abbreviated label instead of month number (e.g., use "Feb"
       # instead of 2)
         label = TRUE, abbr = TRUE),
@@ -80,7 +80,6 @@ distributeFishDaily <- function(ressim, param_list, verbose = FALSE) {
   } else {
   # Baseline fish timing is used if there is no collector
     fish_approaching <- data.frame(
-      # Convert the date column into month only (instead of dyt format)
       Month = lubridate::month(param_list$monthly_runtiming$Date,
         label = TRUE, abbr = TRUE),
       # Because fp_alternative == "No", use the BASELINE approaching column:

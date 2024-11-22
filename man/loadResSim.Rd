@@ -11,7 +11,9 @@ loadResSim(
   outflowsheet = NULL,
   powerhousesheet = NULL,
   rosheet = NULL,
-  spillsheet = NULL
+  spillsheet = NULL,
+  year_override = FALSE,
+  forced_year_range = NULL
 )
 }
 \arguments{
@@ -48,6 +50,15 @@ the function will use the first sheet ending in "-ro"}
 \item{spillsheet}{Name of Excel sheet containing ResSim results for flow
 through the spillway route. If not provided, defaults to \code{NULL} and
 the function will use the first sheet ending in "-spill"}
+
+\item{year_override}{Useful for debugging; should mismatches in years be
+overridden by the script? This forces the years to match the defined period
+of record defined in \code{forced_year_range}. Defaults to FALSE, such that errors are returned
+when there are year mismatches.}
+
+\item{forced_year_range}{Useful for debugging; forcibly set the years in the
+period of record; all ResSim and other FBW inputs that do not conform to the
+period of record are forced to have this span.}
 }
 \description{
 Load data from an Excel ResSim file.

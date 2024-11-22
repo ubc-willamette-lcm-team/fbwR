@@ -18,35 +18,8 @@ route_dpe (a dataframe including columns \code{elev}, \code{baseline_dpe}, and a
 number of other columns to the right of these that can be used to look up DPE
 at various pool elevations).}
 
-\item{param_list}{A list containing named entries for at least the
-following:
-\verb{route specifications}, with columns: \code{parameter}, \code{Spill}, \code{RO}, \code{Turb}, and
-\code{FPS}, and rows
-rows
-\enumerate{
-\item \code{resv_data_sub$gate_methods}: a dataframe containing one column for each
-outlet type, with one row of data. Columns should include only:
-"ro_gatemethod", "turb_gatemethod", "spill_gatemethod", or
-"fp_gatemethod" (for the FPS).
-There should be one row in the dataframe, containing a character string
-that defines the method of distributing flow between gates (one of
-"Equal Q", "Min Q to equal", "Unit to Max Q", "Target Q", or
-"Peaking Performance").
-\item \code{ro_surv}, \code{turb_surv}, \code{spill_surv}, and \code{fp_surv}: each of these named
-objects should be a length-1 object that is either: 1) a fixed survival
-rate provided as a proportion surviving (e.g., 0.95 indicates 95\% survival)
-or 2) the word "table", indicating that survival should be calculated as a
-function of flow (see \code{fish_distributed_outlets} for details on the
-survival table, as the flow-survival relationship is invariant to which
-alternative is being modelled,). If not provided, assumes survival rate is
-\item 
-\item \code{rereg}: "Y" or "N", is there re-regulating mortality associated with the
-dam? Fish that pass through the FPS do not experience re-regulation
-mortality unless they pass through an FSO (in which case, re-regulating
-mortality is applied).
-\item If \code{rereg} is equal to "Y": \code{rereg_mort}, a single numeric value of the
-mortality rate associated with reregulation (i.e., 1 - survival).
-}}
+\item{param_list}{Parameter list created by \code{loadFromTemplate} and
+\code{loadFromWorkbook} functions.}
 }
 \description{
 Calculate distribution of flow through individual gates within each dam

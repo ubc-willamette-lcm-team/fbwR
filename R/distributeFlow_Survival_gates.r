@@ -39,13 +39,14 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
     # Select only the relevant reservoir data
     resv_data_sub <- resv_data[which(tolower(
       rownames(resv_data)) == structure), ]
-    if (structure != "fps" && tolower(resv_data_sub$normally_used) == "n") {
-      message(paste0("Route ", i,
-        " not normally used, setting survival rate = 0."))
-      fish_distributed_outlets <- fish_distributed_outlets %>%
-        dplyr::mutate("{structure}_survival" := 0)
-      next # Move to the next iteration of i
-    }
+    # This is NOT the process in Excel
+    # if (structure != "fps" && tolower(resv_data_sub$normally_used) == "n") {
+    #   message(paste0("Route ", i,
+    #     " not normally used, setting survival rate = 0."))
+    #   fish_distributed_outlets <- fish_distributed_outlets %>%
+    #     dplyr::mutate("{structure}_survival" := 0)
+    #   next # Move to the next iteration of i
+    # }
     # structure_surv indicates a point value or "table"
     structure_surv <- resv_data_sub$passage_surv_rate
     message(paste0("\n...calculating survival for ", i, ": ", structure_surv))
@@ -82,7 +83,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       surv_table <- data.frame(param_list[[paste0(structure, "_surv_table")]]) %>%
         # Coerce into numeric type
         dplyr::mutate(dplyr::across(dplyr::everything(), as.numeric))
-      # Check if there is a gate method provided, if not quit.
+      # Check if there is a gate method provided, if not stop.
       if (is.na(resv_data_sub$gate_method)) {
         stop(paste0("No gate method provided for ", structure))
       } else {
@@ -144,11 +145,9 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       # Flow distribution calculation
       # Select only the relevant flow data
       # use "^" to indicate beginning of line
-      flowData_tmp <- data.frame(
-        fish_distributed_outlets)[,
-        # Lookup the flow through the current structure
-          grep(paste0("^", tolower(structure), "_flow"),
-          tolower(colnames(fish_distributed_outlets)))]
+      which_flowdata <- grep(paste0("^", tolower(structure), "_flow"),
+          tolower(colnames(fish_distributed_outlets)))
+      flowData_tmp <- fish_distributed_outlets[, which_flowdata]
       # This should exclude any fish-bearing flow columns, which begin with B or
       #   pB
       gates <- resv_data_sub$n_gates
@@ -189,7 +188,7 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
               )
             )
           } else { # if not multielev
-            nearestSurv <- survLinearInterp(newflow[[varname_flow]])
+            nearestSurv <- survLinearInterp(newflow)
           }
           fish_distributed_outlets <- dplyr::mutate(fish_distributed_outlets, 
             !!varname_surv := nearestSurv)
@@ -289,7 +288,6 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
           weighted_survival <- ifelse(
             is.na(nearestSurv),
             weighted_survival,
-
             # Here, have to use an ifelse to avoid dividing by 0
             weighted_survival + (newflow * (1 / ifelse(
               flowData_tmp == 0, Inf, flowData_tmp)) * nearestSurv)
