@@ -1,14 +1,7 @@
 # Create a simple ResSim dataframe and param_list for testing 
 
-ressim <- data.frame(
-  Date = c()
-  # ....
-)
 
-param_list <- loadFromTemplate(template_file = file.path(
-  "inst", "extdata", "NONFINAL_template_data_entry_06012023.xlsx"))
-# Errors here; need to test this one
-# Tests
+
 test_that("errors if inputs not provided", {
   expect_error(distributeFishDaily())
   #!# Need to create these inputs...
@@ -16,10 +9,16 @@ test_that("errors if inputs not provided", {
   expect_error(distributeFishDaily(param_list = list()))
 })
 
+# param_list <- loadFromTemplate(
+#   test_path("testdata", "NONFINAL_template_data_entry_06012023.xlsx"))
 # Test characteristics of inputs provided to the distribution function
 test_that("ressim_tmp created properly", {
+  ressim <- tibble::tibble(
+    Date = date(),
+    outflow_flow = numeric()
+  )
   expect_equal(nrow(data.frame()) == nrow(distributeFishDaily(
-    param_list = list(), ressim = data.frame())))
+    param_list = list(), ressim = ressim)))
 })
 
 # Test that output dataframe includes the 
