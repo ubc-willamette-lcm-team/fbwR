@@ -3,18 +3,21 @@
 #' @aliases distributeFish_daily
 #' @param ressim A dataframe that includes at least Date (in datetime
 #' format) and Outflow (cfs)
-#' @param param_list A list including at least the following named objects: 
-#'   `alt_desc`, with named entry "collector", the fish passage structure name
-#'   `route_dpe`, a dataframe including columns `elev`, `baseline_dpe`, and any 
+#' @param param_list A named list of dam operation and biological parameters required to
+#' run FBW. 
+#' This list is typically created by reading in values from a template using the `loadFromTemplate` or 
+#' `loadFromWorkbook` functions. <br> The list should include at least the following entries: 
+#'   1. `alt_desc`, with named entry "collector", the fish passage structure name.
+#'   2. `route_dpe`, a dataframe including columns `elev`, `baseline_dpe`, and any 
 #' number of other columns to the right of these that can be used to look up DPE
-#' at various pool elevations)
-#'   `fps_max_elev`: a single numeric value, the maximum pool elevation at 
-#'   which the fish passage structure can operate)
-#'   `fps_bottom_elev`: a single numeric value, the minimum pool elevation (in
-#'   feet) at which the fish passage structure can operate
-#'   `dpe_x_position`: a single numeric value referencing which column of the 
+#' at various pool elevations).
+#'   3. `fps_max_elev`: a single numeric value, the maximum pool elevation at 
+#'   which the fish passage structure can operate).
+#'   4. `fps_bottom_elev`: a single numeric value, the minimum pool elevation (in
+#'   feet) at which the fish passage structure can operate.
+#'   5. `dpe_x_position`: a single numeric value referencing which column of the 
 #'   DPE lookup table (provided in `param_list`). Used to determine how many
-#' which column of `route_dpe` AFTER the baseline should be selected?
+#'   columns of `route_dpe` AFTER the baseline should be selected?
 #' @param verbose (for checking of outputs) If `FALSE`, the default value, the 
 #' returned dataframe will not include intermediate calculations (e.g., monthly
 #' flow rates). It may be helpful for debugging purposes to retain the columns

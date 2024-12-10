@@ -1,5 +1,5 @@
 #' Find the closet value to x in a table, given a provided tolerance value.
-#' Taken from the R MALDIQuant library
+#' Taken from the R MALDIQuant library.
 #' @param x Value to look up for matching in the table
 #' @param table Table of values with columns to search/lookup
 #' @param tolerance Accepted tolerance between the value to look up and the 
@@ -8,7 +8,7 @@
 #' infinity, such that no tolerance is applied.
 #' @param nomatch The value to return if the difference between x and the
 #' closest value in the table is greater than the tolerance value
-#' @return Closest value in table to x.
+#' @return Closest value in the table to x.
 
 match_closest <- function(x, table, tolerance = Inf, nomatch = NA_integer_) {
   lIdx <- findInterval(x, table, rightmost.closed = FALSE, all.inside = TRUE)

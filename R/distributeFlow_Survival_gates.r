@@ -291,7 +291,6 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
             # Here, have to use an ifelse to avoid dividing by 0
             weighted_survival + (newflow * (1 / ifelse(
               flowData_tmp == 0, Inf, flowData_tmp)) * nearestSurv)
-
           )
         }
         fish_distributed_outlets <- fish_distributed_outlets %>%

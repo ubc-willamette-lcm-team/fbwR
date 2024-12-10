@@ -2,8 +2,7 @@
 % Please edit documentation in R/runFBW.r
 \name{runFBW}
 \alias{runFBW}
-\title{Run all steps of the FBW model, using only ResSim data and a biological/
-dam operation template file.}
+\title{Run all steps of the FBW model using a HEC-ResSim run and biological parameters}
 \usage{
 runFBW(
   template_file = NULL,
@@ -16,7 +15,7 @@ runFBW(
 )
 }
 \arguments{
-\item{template_file}{File path to an Excel spreadsheet with standardized
+\item{template_file}{Path to an Excel spreadsheet with standardized
 inputs. One of \code{template_path} or \code{param_list} must be provided; if using
 a template, it is loaded and translated into a parameter list like
 \code{param_list}.}
@@ -41,11 +40,51 @@ year, with each row representing a single day in the 365-day year.}
 survival estimates? This summarizes across years within the period of record
 in the ResSim input file.}
 
-\item{verbose}{Should all intermediate columns be retained? If \code{TRUE}, every
-intermediate step is included in the FBW output. Otherwise, only columns
-required to run the main FBW functions are maintained.}
+\item{verbose}{(Optional) Logical argument indicating whether to retain
+intermediate calculation columns in the result. Intermediate calculations
+include the proportions of flow through each outlet, Defaults to \code{FALSE}.}
+}
+\value{
+A dataframe which includes either daily estimates of fish passage and
+survival through dam outlets (if \code{summarize = FALSE}) or summaries of passage
+after averaging across years in the period of record.
 }
 \description{
-Run all steps of the FBW model, using only ResSim data and a biological/
-dam operation template file.
+Using results from a HEC-ResSim hydrological model run and a set of biological
+and dam operation parameters, \code{runFBW} performs all the steps of the dam passage
+model.
+}
+\details{
+FBW simulates dam passage of downstream migrants on a daily timestep. It requires
+hydrological information be provided from a HEC-ResSim hydrological simulation model
+run based on some dam operation rules. HEC-ResSim runs can represent status-quo dam
+management, or some operational alternative.
+
+In addition to hydrological model results, FBW requires information about fish behaviour
+and dam operating rules. Parameters are provided for a single "cohort" of downstream
+migrants - included in a cohort are fish of approximately the same size, species, and fish
+passage behaviours. If there are multiple cohorts passing a dam, each could be parameterized
+differently to reflect size- and species-specific passage behaviours and survival.
+
+Briefly, the steps of the FBW model are:
+\enumerate{
+\item From monthly run timing data, calculate the expected proportion of the cohort that
+should pass in each day. The simulated period matches the period of record from the HEC-ResSim
+model runs, and FBW simulates passage for each day included in the hydrological model outputs.
+\item In each day, calculate the proportion of fish which attempt to enter the dam but fail.
+Dam passage efficiency, DPE, is the proportion of fish which seek to enter the dam and succeed.
+The 1-DPE component of the population is not modelled further with FBW (i.e. there are currently
+no model processes reflecting in-reservoir survival and repeated attempts to pass after an
+initial failure).
+\item Of those fish that successfully enter the dam, distribute them between available dam outlets.
+FBW is currently parameterized to include spillway gates, powerhouse turbines, regulating outlets,
+and several types of fish passage structures. Fish distribute between dam outlets according to
+the distribution of flow and the relative attractiveness of each route.
+\item Once fish are distributed between outlets, calculate their survival (either as a point value
+or as a function of flow through the outlet). In the case that there is a multi-gated outlet (e.g.,
+a spillway with multiple gates or a powerhouse with multiple turbines), FBW accounts for how flow
+distributes between gates according to dam operation rules.
+\item (Optional) Summarize dam passage efficiency and route-specific survival from daily into annual
+passage metrics.
+}
 }

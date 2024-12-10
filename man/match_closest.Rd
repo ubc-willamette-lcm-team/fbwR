@@ -3,7 +3,7 @@
 \name{match_closest}
 \alias{match_closest}
 \title{Find the closet value to x in a table, given a provided tolerance value.
-Taken from the R MALDIQuant library}
+Taken from the R MALDIQuant library.}
 \usage{
 match_closest(x, table, tolerance = Inf, nomatch = NA_integer_)
 }
@@ -21,9 +21,9 @@ infinity, such that no tolerance is applied.}
 closest value in the table is greater than the tolerance value}
 }
 \value{
-Closest value in table to x.
+Closest value in the table to x.
 }
 \description{
 Find the closet value to x in a table, given a provided tolerance value.
-Taken from the R MALDIQuant library
+Taken from the R MALDIQuant library.
 }

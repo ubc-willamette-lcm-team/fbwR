@@ -9,25 +9,7 @@
 #' This dataframe must include a column, `approaching_daily_postDPE`, the daily
 #' proportion of fish that pass the dam (after accounting for dam passage 
 #' efficiency)
-#' @param param_list A list including at least the following named objects: 
-#'   `alt_desc`, with named entry "collector", the fish passage structure name
-#'   `route_dpe`, a dataframe including columns `elev`, `baseline_dpe`, and any 
-#' number of other columns to the right of these that can be used to look up DPE
-#' at various pool elevations)
-#'   `fps_max_elev`: a single numeric value, the maximum pool elevation at 
-#'   which the fish passage structure can operate)
-#'   `fps_bottom_elev`: a single numeric value, the minimum pool elevation (in
-#'   feet) at which the fish passage structure can operate
-#'   `dpe_x_position`: a single numeric value referencing which column of the 
-#'   DPE lookup table (provided in `param_list`). Used to determine how many
-#' which column of `route_dpe` AFTER the baseline should be selected?
-#' @param verbose (Optional) Logical argument indicating whether 
-#' intermediate columns (proportion of spill in each outlet: `pB.spill`, 
-#' `pB.turb`, `pB.RO`, and `pB.FPS`; fish-bearing flow through each 
-#' outlet: `B.spill`, `B.turb`, `B.RO`, and `B.FPS`; and route
-#' effectiveness for each outlet: `RE.spill`, `RE.turb`, `RE.RO`, and
-#' `RE.FPS`). Defaults to FALSE, in which case only the proportion of fish 
-#' through each outlet is returned in the output dataframe.
+#' @inheritParams distributeFishDaily
 #' 
 #' @return A dataframe with all of the columns of the input table, 
 #' `fish_postDPE`, with the addition of some number of columns (depending on the
@@ -47,7 +29,8 @@
 #' 
 #' @export
 
-calcFPSFlow <- function(fps, fish_postDPE, param_list, verbose) {
+calcFPSFlow <- function(fish_postDPE, param_list, verbose) {
+  fps <- as.character(param_list$alt_desc[["collector"]])
   stopifnot(fps %in% c("NONE", "FSS", "FSC", "FISH WEIR", "FSO"))
   #!# PASTED FROM distributeFish_outlets.R function
   # Set min and max elevation for FPS

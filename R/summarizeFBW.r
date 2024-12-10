@@ -21,6 +21,7 @@
 #' @importFrom stats quantile
 #' @importFrom stats median
 #' @importFrom rlang .data
+#' @importFrom stats sd
 #' @export
 
 summarizeFBW <- function(fish_passage_survival) {

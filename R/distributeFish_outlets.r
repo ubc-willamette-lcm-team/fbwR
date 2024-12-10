@@ -10,23 +10,26 @@
 #' proportion of fish that pass the dam (after accounting for dam passage 
 #' efficiency)
 #' @param param_list A list including at least the following named objects: 
-#'   `alt_desc`, with named entry "collector", the fish passage structure name
-#'   `route_dpe`, a dataframe including columns `elev`, `baseline_dpe`, and any 
+#'   1. `alt_desc`, with named entry "collector", the fish passage structure name; 
+#'   2. `route_dpe`, a dataframe including columns `elev`, `baseline_dpe`, and any 
 #' number of other columns to the right of these that can be used to look up DPE
-#' at various pool elevations)
-#'   `fps_max_elev`: a single numeric value, the maximum pool elevation at 
-#'   which the fish passage structure can operate)
-#'   `fps_bottom_elev`: a single numeric value, the minimum pool elevation (in
-#'   feet) at which the fish passage structure can operate
-#'   `dpe_x_position`: a single numeric value referencing which column of the 
-#'   DPE lookup table (provided in `param_list`). Used to determine how many
-#' which column of `route_dpe` AFTER the baseline should be selected?
-#' @param verbose (Optional) Logical argument indicating whether 
-#' intermediate columns (proportion of spill in each outlet: `pB.spill`, 
+#' at various pool elevations);
+#'   3. `fps_max_elev`: a single numeric value, the maximum pool elevation at 
+#'   which the fish passage structure can operate);
+#'   4. `fps_bottom_elev`: a single numeric value, the minimum pool elevation (in
+#'   feet) at which the fish passage structure can operate; 
+#'   5. `dpe_column_name`: the name of the column in the `route_dpe` table that should
+#'   be used to inform elevation-specific DPE values. This can be one of `baseline_dpe`
+#'   or any other non-elevation columns in the `route_dpe` table. Typically, non-baseline
+#'   DPE values are used when a fish passage structure is in place. When a non-baseline DPE
+#'   column is used, it only applies if the pool elevation is within the operating 
+#'   elevations of the passage structure.
+#' @param verbose (Optional) Logical argument indicating whether to retain
+#' intermediate columns in the output (proportion of spill in each outlet: `pB.spill`, 
 #' `pB.turb`, `pB.RO`, and `pB.FPS`; fish-bearing flow through each 
 #' outlet: `B.spill`, `B.turb`, `B.RO`, and `B.FPS`; and route
 #' effectiveness for each outlet: `RE.spill`, `RE.turb`, `RE.RO`, and
-#' `RE.FPS`). Defaults to FALSE, in which case only the proportion of fish 
+#' `RE.FPS`). Defaults to `FALSE`, in which case only the proportion of fish 
 #' through each outlet is returned in the output dataframe.
 #' 
 #' @return A dataframe with all of the columns of the input table, 
@@ -51,8 +54,8 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
   verbose = FALSE) {
   ### STEP 1: FISH-BEARING FLOW - FPS FLOW
   ### Replace this step with resdistributeFlow
-  fps <- as.character(param_list$alt_desc[["collector"]]) # what kind of FPS?
-  fishBearingFlow <- calcFishBearingFlow(fps = fps, fish_postDPE = fish_postDPE, 
+  # fps <- as.character(param_list$alt_desc[["collector"]]) # what kind of FPS?
+  fishBearingFlow <- calcFishBearingFlow(fish_postDPE = fish_postDPE, 
     param_list = param_list, verbose)
   percentDist <- fishBearingFlow %>%
   # First, calculate proportional flow

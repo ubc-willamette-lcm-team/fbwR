@@ -15,24 +15,29 @@ proportion of fish that pass the dam (after accounting for dam passage
 efficiency)}
 
 \item{param_list}{A list including at least the following named objects:
-\code{alt_desc}, with named entry "collector", the fish passage structure name
-\code{route_dpe}, a dataframe including columns \code{elev}, \code{baseline_dpe}, and any
+\enumerate{
+\item \code{alt_desc}, with named entry "collector", the fish passage structure name;
+\item \code{route_dpe}, a dataframe including columns \code{elev}, \code{baseline_dpe}, and any
 number of other columns to the right of these that can be used to look up DPE
-at various pool elevations)
-\code{fps_max_elev}: a single numeric value, the maximum pool elevation at
-which the fish passage structure can operate)
-\code{fps_bottom_elev}: a single numeric value, the minimum pool elevation (in
-feet) at which the fish passage structure can operate
-\code{dpe_x_position}: a single numeric value referencing which column of the
-DPE lookup table (provided in \code{param_list}). Used to determine how many
-which column of \code{route_dpe} AFTER the baseline should be selected?}
+at various pool elevations);
+\item \code{fps_max_elev}: a single numeric value, the maximum pool elevation at
+which the fish passage structure can operate);
+\item \code{fps_bottom_elev}: a single numeric value, the minimum pool elevation (in
+feet) at which the fish passage structure can operate;
+\item \code{dpe_column_name}: the name of the column in the \code{route_dpe} table that should
+be used to inform elevation-specific DPE values. This can be one of \code{baseline_dpe}
+or any other non-elevation columns in the \code{route_dpe} table. Typically, non-baseline
+DPE values are used when a fish passage structure is in place. When a non-baseline DPE
+column is used, it only applies if the pool elevation is within the operating
+elevations of the passage structure.
+}}
 
-\item{verbose}{(Optional) Logical argument indicating whether
-intermediate columns (proportion of spill in each outlet: \code{pB.spill},
+\item{verbose}{(Optional) Logical argument indicating whether to retain
+intermediate columns in the output (proportion of spill in each outlet: \code{pB.spill},
 \code{pB.turb}, \code{pB.RO}, and \code{pB.FPS}; fish-bearing flow through each
 outlet: \code{B.spill}, \code{B.turb}, \code{B.RO}, and \code{B.FPS}; and route
 effectiveness for each outlet: \code{RE.spill}, \code{RE.turb}, \code{RE.RO}, and
-\code{RE.FPS}). Defaults to FALSE, in which case only the proportion of fish
+\code{RE.FPS}). Defaults to \code{FALSE}, in which case only the proportion of fish
 through each outlet is returned in the output dataframe.}
 }
 \value{

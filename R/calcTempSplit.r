@@ -14,6 +14,8 @@
 #' @importFrom lubridate %within%
 #' @importFrom lubridate year
 #' @importFrom lubridate interval
+#' @importFrom utils capture.output
+#' @importFrom utils head
 #' @export
 
 calcTempSplit <- function(ressim_data, water_year_types, temp_dist_df) {
@@ -36,7 +38,7 @@ calcTempSplit <- function(ressim_data, water_year_types, temp_dist_df) {
         "There is more than one year of data in the `temp_dist` parameter table.",
         " Keeping only dates in the most prevalent year (", 
         names(yr_summary)[which(yr_summary == max(yr_summary))], "):\n",
-        paste(capture.output(print(temp_dist_sorted)), collapse = "\n")
+        paste(utils::capture.output(print(temp_dist_sorted)), collapse = "\n")
         ))
     }
     baseline_year <- lubridate::year(temp_dist_sorted$Date[1])

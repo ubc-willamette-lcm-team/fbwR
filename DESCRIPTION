@@ -12,8 +12,9 @@ Description: The Fish Benefits Workbook (FBW) is a simulation model that uses a
   expanding the model and to allow for greater use and dissemination of the 
   model. 
   The model is based on information about fish timing, dam operations from a 
-  hydrological model (**ResSim, developed by ...**), and estimates of dam passage 
-  efficiency and survival from field studies. It estimates how the distribution
+  hydrological model (ResSim, developed by the US Army Corps' Hydrological 
+  Engineering Center), and estimates of dam passage efficiency and survival 
+  from field studies. FBW simulates the distribution
   of flow through a dam's outlets routes fish through various outlets in a dam,
   including spillways, turbines, regulating outlets, and a variety of types of 
   fish passage structures. Calculations are performed for each day within a 
@@ -26,16 +27,19 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Imports: 
-  dplyr (>= 1.1.2),
-  lubridate (>= 1.9.2),
-  readxl (>= 1.4.3),
-  rlang,
-  stats,
-  tidyr 
+    dplyr (>= 1.1.2),
+    lubridate (>= 1.9.2),
+    readxl (>= 1.4.3),
+    rlang,
+    stats,
+    tidyr,
+    utils
 Depends: R (>= 4.3)
 Suggests: 
     knitr,
+    shiny,
     rmarkdown,
+    spelling,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 NeedsCompilation: no
@@ -44,3 +48,4 @@ Author: Mairin Deith [aut, cre]
 Maintainer: Mairin Deith <mairin.deith@gmail.com>
 License: MIT + file LICENSE
 Config/testthat/edition: 3
+Language: en-US

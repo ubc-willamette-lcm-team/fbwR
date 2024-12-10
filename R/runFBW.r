@@ -1,6 +1,43 @@
-#' Run all steps of the FBW model, using only ResSim data and a biological/
-#' dam operation template file.
-#' @param template_file File path to an Excel spreadsheet with standardized
+#' Run all steps of the FBW model using a HEC-ResSim run and biological parameters
+#' 
+#' @description
+#' Using results from a HEC-ResSim hydrological model run and a set of biological
+#' and dam operation parameters, `runFBW` performs all the steps of the dam passage
+#' model. 
+#' 
+#' @details
+#' FBW simulates dam passage of downstream migrants on a daily timestep. It requires
+#' hydrological information be provided from a HEC-ResSim hydrological simulation model
+#' run based on some dam operation rules. HEC-ResSim runs can represent status-quo dam 
+#' management, or some operational alternative.
+#' 
+#' In addition to hydrological model results, FBW requires information about fish behaviour
+#' and dam operating rules. Parameters are provided for a single "cohort" of downstream
+#' migrants - included in a cohort are fish of approximately the same size, species, and fish 
+#' passage behaviours. If there are multiple cohorts passing a dam, each could be parameterized
+#' differently to reflect size- and species-specific passage behaviours and survival.
+#' 
+#' Briefly, the steps of the FBW model are: 
+#' 1. From monthly run timing data, calculate the expected proportion of the cohort that
+#' should pass in each day. The simulated period matches the period of record from the HEC-ResSim
+#' model runs, and FBW simulates passage for each day included in the hydrological model outputs.
+#' 2. In each day, calculate the proportion of fish which attempt to enter the dam but fail. 
+#' Dam passage efficiency, DPE, is the proportion of fish which seek to enter the dam and succeed.
+#' The 1-DPE component of the population is not modelled further with FBW (i.e. there are currently
+#' no model processes reflecting in-reservoir survival and repeated attempts to pass after an
+#' initial failure).
+#' 3. Of those fish that successfully enter the dam, distribute them between available dam outlets. 
+#' FBW is currently parameterized to include spillway gates, powerhouse turbines, regulating outlets, 
+#' and several types of fish passage structures. Fish distribute between dam outlets according to
+#' the distribution of flow and the relative attractiveness of each route.
+#' 4. Once fish are distributed between outlets, calculate their survival (either as a point value
+#' or as a function of flow through the outlet). In the case that there is a multi-gated outlet (e.g., 
+#' a spillway with multiple gates or a powerhouse with multiple turbines), FBW accounts for how flow
+#' distributes between gates according to dam operation rules. 
+#' 5. (Optional) Summarize dam passage efficiency and route-specific survival from daily into annual 
+#' passage metrics.
+#' 
+#' @param template_file Path to an Excel spreadsheet with standardized
 #' inputs. One of `template_path` or `param_list` must be provided; if using
 #' a template, it is loaded and translated into a parameter list like
 #' `param_list`.
@@ -19,9 +56,13 @@
 #' @param summarize Should the daily outputs be summarized into average monthly
 #' survival estimates? This summarizes across years within the period of record
 #' in the ResSim input file.
-#' @param verbose Should all intermediate columns be retained? If `TRUE`, every
-#' intermediate step is included in the FBW output. Otherwise, only columns
-#' required to run the main FBW functions are maintained.
+#' @param verbose (Optional) Logical argument indicating whether to retain
+#' intermediate calculation columns in the result. Intermediate calculations 
+#' include the proportions of flow through each outlet, Defaults to `FALSE`.
+#' 
+#' @returns A dataframe which includes either daily estimates of fish passage and 
+#' survival through dam outlets (if `summarize = FALSE`) or summaries of passage
+#' after averaging across years in the period of record.
 #' 
 #' @importFrom dplyr mutate
 #' @importFrom rlang .data

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<style>
+table, th, td {
+  border:1px solid black;
+  border-collapse: collapse;
+}
+</style>
+
+<p>Hydrological information is needed to direct fish through the dam for each day in a historical period of record. FBW was designed to read information from HEC-ResSim, a hydrological reservoir simulation model that projects in each day over a 40+ year period several key hydrological parameters. The information required by FBW include daily projected pool elevation (feet), total outflow (cfs), flow through the powerhouse (cfs), flow through the spillway (cfs), and flow through any regulating outlets (cfs). If any of these structures are missing in a given dam, flow is set to zero for all days in the period of record.</p>
+
+<h3>Step 1. Upload required files in the <b><i>Upload ResSim and water-year-type data</b></i> box</h3>
+<p>You can either (1) upload ResSim and water-year-type data in individual spreadsheets, or (2) upload a pre-filled FBW Excel workbook.</p>
+<ol>
+  <li> <b>Option 1: Upload ResSim and water-year-type data separately</b>
+    <ol type="a">
+      <li>Upload HEC-ResSim data (in the form of .xlsx or .xlsm files) by clicking on the <b>Upload ResSim file</b> button. A file selector window will appear, click on the file you wish to upload.</li>
+      <li><i><b>To run models with temperature control operations:</i></b> You must upload water-year-type information as well. You can upload a .csv file of water year types for each year in the period of record. This should be a file including only two columns, named "Year" and "WaterYearType".</li>
+      <p>When uploading the file, you can indicate how many rows of the .csv file to skip (if there are extra header rows that do not include column names) and whether column names are included in the file. If no column names are provided, the app will read in the first two columns and they will be named "Year" and "WaterYearType". The water year types accepted by the FBW model are: <b>Deficit</b> (hot/dry years), <b>Insufficient</b> (calculated as the average of normal and hot/dry years), <b>Adequate</b> (normal years), and <b>Abundant</b> (cool/wet years). <br>See the example below for an example of how temperature data should be input:</p> 
+      <table style="width:20%">
+        <caption>Example water-year-type data</caption>
+        <tr>
+          <th>Year</th>
+          <th>WaterYearType</th>
+        </tr>
+        <tr>
+          <td>1946</td>
+          <td>Adequate</td>
+        </tr>
+        <tr>
+          <td>1947</td>
+          <td>Adequate</td>
+        </tr>
+        <tr>
+          <td>1948</td>
+          <td>Abundant</td>
+        </tr>
+        <tr>
+          <td>...</td>
+          <td>...</td>
+        </tr>
+        <tr>
+          <td>2020</td>
+          <td>Deficit</td>
+        </tr>
+      </table>
+      <br>
+    </ol>
+  </li>
+  <li><b>Option 2: Upload both data sources from an FBW Excel workbook</b>
+    <p>Alternatively, you can upload both HEC-ResSim and water-year-type data from a pre-filled FBW Excel workbook. If you click on the <b>Upload ResSim file</b> button in the box titled <b><i>Upload ResSim and water-year-type data</b></i>, a file selector window will appear. Click on the file you wish to upload.</p>
+  </li>
+</ol>
+
+<h3>Step 2. Compile the ResSim data reside in the uploaded workbooks</h3>
+<p>No matter which way you uploaded the ResSim data (from standalone workbooks or from FBW Excel), you have to verify where the ResSim data reside in the workbook and how they need to be processed. For each type of hydrological data input (i.e., pool elevation, total outflow, flow rates through different outlets, and temperature split data), you will have to select the sheet name that contains those data. The app assumes each ResSim worksheet has one column for date in the period of record, and one or more columns of hydrological data corresponding to each date. If the ResSim data are in wide format (the case for FBW Excel workbooks, see below for an example), be sure the checkbox labelled <b>ResSim results in wide format</b> is checked "yes".</p> 
+
+<table style="width:50%">
+  <caption>Example of <b>wide-format</b> ResSim data (as an example, pool elevation (in feet) is shown). Each column represents a year of the period of record, each row a day of the year.</caption>
+  <tr>
+    <th>Date</th>
+    <th>1946</th>
+    <th>1947</th>
+    <th>...</th>
+    <th>2020</th>
+  </tr>
+  <tr>
+    <td>Jan 1</td>
+    <td>1619</td>
+    <td>1610</td>
+    <td>...</td>
+    <td>1530</td>
+  </tr>
+  <tr>
+    <td>Jan 2</td>
+    <td>1614</td>
+    <td>1540</td>
+    <td>...</td>
+    <td>1537</td>
+  </tr>
+    <tr>
+    <td>...</td>
+    <td>...</td>
+    <td>...</td>
+    <td>...</td>
+    <td>...</td>
+  </tr>
+  <tr>
+    <td>Dec 31</td>
+    <td>1542</td>
+    <td>1532</td>
+    <td>...</td>
+    <td>1539</td>
+  </tr>
+</table>
+<br>
+<table style="width:50%">
+  <caption>Example of <b>long-format</b> ResSim outputs (as an example,  pool elevation in feet is shown). Each column represents a value for a given hydrological parameter (as an example, pool elevation in feet is shown below, corresponding to the wide-format data above), each row is a unique date in the period of record.</caption>
+  <tr>
+    <th>Date</th>
+    <th>Pool elevation</th>
+  </tr>
+  <tr>
+    <td>Jan 1, 1946</td>
+    <td>1619</td>
+  </tr>
+  <tr>
+    <td>Jan 2, 1946</td>
+    <td>1614</td>
+  </tr>
+  <tr>
+    <td>...</td>
+    <td>...</td>
+  </tr>
+  <tr>
+    <td>Dec 31, 2020</td>
+    <td>1539</td>
+  </tr>
+</table>
+
+<hr>
+
+<p>Next, upload a .csv file of water year types for each year in the period of record. This should be a file including only two columns, named "Year" and "WaterYearType".</p> 
+<p>When uploading the file, you can indicate how many rows of the .csv file to skip (if there are extra header rows that do not include column names) and whether column names are included in the file. If no column names are provided, the app will read in the first two columns and they will be named "Year" and "WaterYearType". The water year types accepted by the FBW model are, in increasingly wet order, "deficit", "insufficient", "adequate", and "abundant".</p> 
+
+<h3>Step 3. Preview compiled ResSim and temperature split data</h3>
+
+<p>Once you have loaded the hydrological files and defined which sheets ResSim data are stored within, the dataframes are merged. Clicking the <b>Compile ResSim and water year type data</b> button will compile the ResSim and water year type data into a single dataframe. You can then preview the compiled dataframe in the "Preview" pane on this page.</p>
+
+<p>You can also optionally preview hydrological information using plots. Clicking on the <b>Step 2. Preview hydrological data</b> menu to the left will take you to a page where you can create graphs of hydrological data over the period of record.</p>
