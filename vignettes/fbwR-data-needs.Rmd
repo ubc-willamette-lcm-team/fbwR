@@ -1,0 +1,94 @@
+---
+title: "fbwR: Description of parameter inputs"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{fbwR-data-needs}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+fbwR requires three types of inputs: 
+
+1. Hydrological conditions at the dams for each day to be simulated (pool elevation, total outflow, and outflow through each dam outlet),
+2. Parameters describing how the dam operates, including hydrological limits to operation like minimum and maximum pool elevations where the outlet is operated, and
+2. Parameters that describe how fish respond to hydrology and outlet configuration during dam passage. 
+
+### Hydrological information
+
+fbwR was built to accept hydrological data in the form of HEC-ResSim results. 
+The ResSim model reports flow and pool elevation statistics for each day in a historical period of record.
+fbwR requires the following (expressed as daily averages): 
+
+1. **Daily pool elevation** in the same units as pool elevation parameters input to fbwR. For example, this is often elevation in feet. 
+2. **Total outflow in each day** (typically this is in cfs, but you can use other measures of flow so long as they are consistent with the biological parameters input to fbwR)
+3. **Flow through each permanent outlet at the dam**. Currently, fbwR can track flow and fish passage through the powerhouse, spillway, and regulating outlets. If any of these outlets are NOT at the dam of interest, flow through these outlets can be set to zero.
+
+fbwR is designed to input ResSim results as an Excel Spreadsheet with the following structure: 
+
+* **One sheet for each of the three hydrological variables above**: There should be multiple sheets in the spreadsheet, each one with a different name. By default, fbwR will look for sheets matching the following naming convention: `*_ELEV`, `*_OUT`, `*_PH`, `*_RO`, and `*_SPILL` (the `*` indicates that you can put any text in front of this; fbwR looks for sheets that end with these strings). However, you can also indicate which sheets correspond to which hydrological attribute when you read the ResSim results in to fbwR (see below).
+* **One row per day of the year, one column per year in the period of record**: fbwR was designed to read *wide-format* ResSim results. As an example, here is a ResSim sheet for pool elevation (in feet above sea level) with one column per year in the period of record (here, starting in 1946 and ended in 2020) and one row per date. 
+
+| Date | 1946 | 1947 | ... | 2020 | 
+| +--- | +--- | +--- | +--- | +--- |
+| Jan 1  | 1619 | 1610 |	... | 	1530 |
+| Jan 2  | 1614 | 1540 |	... | 	1537 |
+| ... 	 | ...  |	... |	... | 	... |
+| Dec 31 | 1542 | 1532 |	... | 	1539 |
+
+To read in ResSim data, use the `loadResSim()` function: 
+
+```
+loadResSim(infile = "PATH_TO_ResSim_SPREADSHEET.xlsx")
+```
+
+If you only provide the path to the ResSim result spreadsheet, fbwR will read any sheet with `_ELEV` in its name as pool elevation, the first sheet with `*_OUT` in its name as total outflow, the first sheet with `*_PH` in its name as powerhouse flow, the first with `*_RO` in its name as regulating outflow flow, and the first with `*_SPILL` in its name as spillway flow. 
+
+Alternatively, you can tell the function which sheet names should be used for each type of hydrological variable: 
+
+```
+loadResSim(infile = "PATH_TO_ResSim_SPREADSHEET.xlsx",
+  elevsheet = "NAME_OF_POOL_ELEVATION_SHEET",
+  outflowsheet = "NAME_OF_OUTFLOW_SHEET",
+  powerhousesheet = "NAME_OF_POWERHOUSE_FLOW_SHEET",
+  rosheet = "NAME_OF_REGULATING_OUTLET_FLOW_SHEET",
+  spillsheet = "NAME_OF_SPILLWAY_FLOW_SHEET")
+```
+
+
+### Water year type classifications
+
+fbwR also takes in information about water year type classifications over the period of record.
+
+Water year types are used when there is temperature splitting occurring at the dam. 
+Each water year category will have a different prescribed temperature split which influences the proportion of water which passes over the spillway versus some other outlet.
+
+Even if temperature splitting is not included in the fbwR model run, water year types are used in the final aggregation and summary steps. 
+Average fish passage efficiency and survival are summarized for each category of water year type in the period of record.
+
+fbwR expects water year type information to be provided in the following format: 
+
+| Year | WaterYearType | 
+| +--- | +--- |
+| 1946 | Adequate | 
+| 1947 | Adequate | 
+| 1948 | Abundance |
+| ... | ... |
+| 2020 | Deficit |
+
+### Dam operating rules
+
+fbwR also takes in information about dam operation and any fish passage structures that might be implemented. 
+Fish passage structures are typically designed to collect fish in the forebay so they can be transported to downstream release locations (but they may also redirect fish to save outlets or bypass them to the dam tailrace). 
+
+### Behavioral responses of downstream migranting fish to hydrological conditions and dam operation and other parameters
+
+More than just hydrological information, fbwR also needs information about how fish respond to hydrological conditions.
+This includes parameters that describe how pool elevation and flow influence the ability of fish to enter, navigate, and survive downstream dam passage.
+
+The biological and simulation parameters required include: 
+
+1. **Average monthly run timing information**: Month-by-month, what proportion of a cohort is in the forebay of the dam (where a *cohort* is defined as same-size and approximately same-age fish who were spawned in the same year and will attempt passage in the same 12-month period).
+2. **Route fish with flow?**: Should flow rates be used when calculating daily run timing from monthly run timing? If yes, daily proportions of fish in the forebay will be weighted based on the total outflow in each day (as an extreme example, if all of December's outflow in a given year occurred on December 1, routing fish with flow would simulate that all fish attempting passage in December would pass on the 1st). If no, the proportion of migrants that attempt dam passage in each day is uniform across the month (for example, if 30% of the fish attempt passage in a month with 30 days, the proportion of passing fish will be $0.3/30$ or 0.1 in each day of that month). 
+3. **

@@ -1,5 +1,5 @@
 #' Load data from an Excel ResSim file. 
-#' @param infile A character string indicating the full file path to an
+#' @param file A character string indicating the full file path to an
 #' Excel workbook of HEC-ResSim flow outputs. Each of the following worksheets
 #' must be present (`*` indicates a prefix that will be ignored when the file
 #' is read in): `*_ELEV`: elevation of the pool in feet; `*_OUT`: 
@@ -46,12 +46,12 @@
 #' 
 #' @export
 
-loadResSim <- function(infile, wide = TRUE,
+loadResSim <- function(file, wide = TRUE,
   elevsheet = NULL, outflowsheet = NULL, powerhousesheet = NULL,
   rosheet = NULL, spillsheet = NULL, year_override = FALSE, 
   forced_year_range = NULL) {
-    sheetnames <- readxl::excel_sheets(path = infile)
-    elev <- data.frame(readxl::read_excel(na = character(), trim_ws = F,  infile,
+    sheetnames <- readxl::excel_sheets(path = file)
+    elev <- data.frame(readxl::read_excel(na = character(), trim_ws = F,  file,
         sheet = ifelse(
             is.null(elevsheet),
             sheetnames[grep(pattern = "-elev$", x = tolower(sheetnames))],
@@ -62,7 +62,7 @@ loadResSim <- function(infile, wide = TRUE,
     colnames(elev)[1] <- "Date"
     
     outflow <- data.frame(readxl::read_excel(na = character(), trim_ws = F, 
-      infile,
+      file,
       sheet = ifelse(is.null(outflowsheet),
         sheetnames[grep(pattern = "-out$", x = tolower(sheetnames))],
         outflowsheet), 
@@ -72,7 +72,7 @@ loadResSim <- function(infile, wide = TRUE,
     colnames(outflow)[1] <- "Date"
     
     turbine <- data.frame(readxl::read_excel(na = character(), trim_ws = F,
-      infile,
+      file,
       sheet = ifelse(is.null(powerhousesheet),
         sheetnames[grep(pattern = "-ph$", x = tolower(sheetnames))],
         powerhousesheet),
@@ -82,7 +82,7 @@ loadResSim <- function(infile, wide = TRUE,
     colnames(turbine)[1] <- "Date"
     
     RO <- data.frame(readxl::read_excel(na = character(), trim_ws = F,
-      infile,
+      file,
       sheet = ifelse(is.null(rosheet),
         sheetnames[grep(pattern = "-ro$", x = tolower(sheetnames))],
         rosheet),
@@ -90,7 +90,7 @@ loadResSim <- function(infile, wide = TRUE,
       col_types = c("date", rep("numeric", 74)),
       range = "A7:BW372"))
     colnames(RO)[1] <- "Date"
-    spill <- data.frame(readxl::read_excel(na = character(), trim_ws = F,  infile,
+    spill <- data.frame(readxl::read_excel(na = character(), trim_ws = F,  file,
       sheet = ifelse(is.null(spillsheet),
         sheetnames[grep(pattern = "-spill$", x = tolower(sheetnames))],
         spillsheet),
@@ -164,7 +164,7 @@ loadResSim <- function(infile, wide = TRUE,
       warning("Sum of turbine, RO, and spillway flow do not match outflow flow on the following dates (n = ", nrow(nonmatching), "). Check for year mismatches in the ResSim data. Head of nonmatching shown below:\n",
         paste(capture.output(print(head(nonmatching))), collapse = "\n"))
     }
-    attr(ressim_out, "ressim_infile") <- infile
+    attr(ressim_out, "ressim_file") <- file
     attr(ressim_out, "year_override") <- year_override
     attr(ressim_out, "forced_year_range") <- ifelse(is.null(forced_year_range), NA, 
       paste0(min(forced_year_range), ":", max(forced_year_range)))

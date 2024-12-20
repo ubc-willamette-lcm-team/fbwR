@@ -21,7 +21,7 @@ library(shinyjs)
 
 ### Install the FBW library
 # devtools::install_git("https://github.com/mairindeith/fbwR")
-devtools::load_all("../fbwR")
+# devtools::load_all("../fbwR")
 library(fbwR)
 
 library(shinythemes) # Better looking :) 
@@ -2682,7 +2682,8 @@ output$monthly_runtiming <- renderRHandsontable({
           xlim(c(0,1))
         ggplotly(ggpl, tooltip = "text")
     } else if(input$fpssurv_type == "table") {
-      example_df <- param_list$fps_surv_table %>%
+      example_df <- param_list$fps_surv_table 
+      example_df %>%
         rename(survival = fps_surv)
       ggpl <- ggplot(example_df, aes(x = flow, y = survival,
         group = 1, 

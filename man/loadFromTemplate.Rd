@@ -4,14 +4,10 @@
 \alias{loadFromTemplate}
 \title{Loads FBW data from a defined template spreadsheet in XLSX format.}
 \usage{
-loadFromTemplate(
-  template_file,
-  year_override = FALSE,
-  forced_year_range = NULL
-)
+loadFromTemplate(file, year_override = FALSE, forced_year_range = NULL)
 }
 \arguments{
-\item{template_file}{File path to an Excel spreadsheet with standardized
+\item{file}{File path to an Excel spreadsheet with standardized
 inputs}
 
 \item{year_override}{Boolean; should the years in the period of record be

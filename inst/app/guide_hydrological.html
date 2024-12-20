@@ -7,7 +7,7 @@ table, th, td {
 }
 </style>
 
-<p>Hydrological information is needed to direct fish through the dam for each day in a historical period of record. FBW was designed to read information from HEC-ResSim, a hydrological reservoir simulation model that projects in each day over a 40+ year period several key hydrological parameters. The information required by FBW include daily projected pool elevation (feet), total outflow (cfs), flow through the powerhouse (cfs), flow through the spillway (cfs), and flow through any regulating outlets (cfs). If any of these structures are missing in a given dam, flow is set to zero for all days in the period of record.</p>
+<p>Hydrological information is needed to direct fish through the dam. FBW was designed to take results from the HEC-ResSim hydrological model, which reports flow and pool elevation statistics for each day in a historical period of record. HEC-ResSim simulates, for in each day a 40+ year historical period, several key hydrological parameters. FBW requires daily pool elevation (in the same units as pool elevation parameters input to FBW; e.g., ), total outflow (cfs), flow through the powerhouse (cfs), flow through the spillway (cfs), and flow through any regulating outlets (cfs). If any of these structures are missing in a given dam, flow is set to zero for all days in the period of record.</p>
 
 <h3>Step 1. Upload required files in the <b><i>Upload ResSim and water-year-type data</b></i> box</h3>
 <p>You can either (1) upload ResSim and water-year-type data in individual spreadsheets, or (2) upload a pre-filled FBW Excel workbook.</p>
@@ -121,7 +121,7 @@ table, th, td {
 <hr>
 
 <p>Next, upload a .csv file of water year types for each year in the period of record. This should be a file including only two columns, named "Year" and "WaterYearType".</p> 
-<p>When uploading the file, you can indicate how many rows of the .csv file to skip (if there are extra header rows that do not include column names) and whether column names are included in the file. If no column names are provided, the app will read in the first two columns and they will be named "Year" and "WaterYearType". The water year types accepted by the FBW model are, in increasingly wet order, "deficit", "insufficient", "adequate", and "abundant".</p> 
+<p>When uploading the file, you can indicate how many rows of the .csv file to skip (if there are extra header rows that do not include column names) and whether column names are included in the file. If no column names are provided, the app will read in the first two columns and they will be named "Year" and "WaterYearType". The water year types accepted by the FBW model are, in increasingly wet order, "deficit", "insufficient", "adequate", and "abundant".</p>
 
 <h3>Step 3. Preview compiled ResSim and temperature split data</h3>
 

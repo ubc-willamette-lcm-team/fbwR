@@ -5,7 +5,7 @@
 \title{Load data from an Excel ResSim file.}
 \usage{
 loadResSim(
-  infile,
+  file,
   wide = TRUE,
   elevsheet = NULL,
   outflowsheet = NULL,
@@ -17,7 +17,7 @@ loadResSim(
 )
 }
 \arguments{
-\item{infile}{A character string indicating the full file path to an
+\item{file}{A character string indicating the full file path to an
 Excel workbook of HEC-ResSim flow outputs. Each of the following worksheets
 must be present (\code{*} indicates a prefix that will be ignored when the file
 is read in): \verb{*_ELEV}: elevation of the pool in feet; \verb{*_OUT}:

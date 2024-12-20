@@ -2,5 +2,5 @@
 #' @export
 
 runApp <- function() {
-  shiny::runApp("inst/shiny/app.R")
+  shiny::runApp(appDir = system.file("app", package = "fbwR"))
 }

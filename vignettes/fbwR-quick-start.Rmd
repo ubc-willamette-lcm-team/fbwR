@@ -1,0 +1,111 @@
+---
+title: "fbwR Quickstart Guide"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{fbwR-quick-start}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+`fbwR` is an R-based version of the **Fish Benefits Workbook**, a modelling approach to integrating hydrology and fish behavior to predict the passage efficiency and survival of fish as they pass downstream of dams.
+It considers the movement of fish as they pass from the forebay of a dam to its tailrace, accounting for which routes fish can take through the dam at time of passage, and the relative survival of passage through those routes.
+
+To simulate downstream passage of fish, especially fish that migrate with the flow of water during seaward migration, it is useful to build a model that incorporates two things: 
+
+1. **Hydrology**: the position and velocity of water passing through a dam.
+2. **Responses to hydrology**: how hydrological influences will impact where and how well fish can approach, enter, and successfully pass the dam.
+
+`fbwR` combines these in a way that allows for modellers and decision makers to assess changes to dam operations (including, for example, the distribution of flow through a dam, timing of flow operations, and reservoir elevation) and changes to dam structures (including the building of fish passage structures). 
+
+## Data requirements
+
+This vignette assumes you already have parameters for the fbwR model saved in a ResSim results file and a template that includes biological and dam operation parameters. 
+
+## Getting started with the software
+
+To use fbwR, you first have to install the package.
+Currently, the best way to install the R package is to download and install from the GitHub repository using the devtools library.
+
+```r
+# If you don't already have devtools installed: 
+install.packages("devtools")
+devtools::install_github(repo = "mairindeith/fbwR")
+```
+
+(If you see the following message, this means that you previously installed the package and it is still in the most up-to-date version)
+
+```
+Skipping install of 'fbwR' from a github remote, the SHA1 has not changed since last install.
+```
+
+Then, load the package into your session: 
+
+```r
+library(fbwR)
+```
+
+## Running the fbwR model
+
+### Launching the Shiny app
+
+The simplest way to interact with the fbwR model is using the Shiny app--a graphical interface where you can input parameters, visualize relationships between model components, run the model, and save its outputs.
+
+You can run the Shiny app locally on your computer using the `runApp()` function of fbwR (with no arguments):
+
+```r
+fbwR::runApp()
+``` 
+
+When you do, your R console should read something like this: 
+
+```
+> fbwR::runApp()
+
+Listening on http://127.0.0.1:5651
+```
+
+If you click on the hyperlink, it will open an interactive Shiny application where you can input required data 
+
+### Required input parameters
+
+fbwR provides three functions which load the parameters necessary to run the fbwR model: 
+
+1. `loadResSim()`: This loads hydrological parameters (pool elevation, total outflow, and flow through each permanent dam outlet) from a HEC-ResSim simulation result
+2. `loadFromTemplate()`: This loads biological and operational parameters from an FBW parameter template. You can download the template using 
+3. `loadFromWorkbook()`: FBW was previously only available as an Excel workbook; if you have a pre-filled workbook on hand, you can load all required parameters--hydrological, biological, and operational--from the workbook using this function.
+
+### Running an fbwR model run in a single step
+
+If you already have a filled-in Excel workbook, fbwR template, and a ResSim results file, you can run the fbwR package in a single function:
+ 
+```r
+fbwR::runFBW()
+```
+
+`runFBW` is designed to be able to read in hydrological and fish biology parameters from different sources, depending on the datasets available to the user.
+There are two ways to provide inputs to `runFBW()`: 
+
+1. **Using file paths to a template and a ResSim result**: If you have a ResSim file and a parameter template ready to load into the model, you can use `runFBW(template_file = "PATH_TO_TEMPLATE", ressim_file = "PATH_TO_RESSIM", ...)`. This will upload the data from those file paths and run the FBW model.
+2. **Using previously uploaded data lists**: If you have already loaded ResSim and biological parameters into your R session using the `load...` functions above, you can use these objects to run the model via `runFBW(param_list = NAME_OF_PARAMETER_OBJECT, ressim = NAME_OF_RESSIM_OBJECT)`. For example: 
+
+```r
+biol_params <- fbwR::loadFromTemplate(file = "PATH_TO_TEMPLATE")
+ressim_results <- fbwR::loadResSim(file = "PATH_TO_RESSIM")
+```
+
+
+### Running the fbwR steps one-at-a-time 
+
+You can also run the fbwR model step-by-step (if you take a look under the hood of the `runFBW` function, you'll notice that all of the below functions are executed there). 
+Here is a brief description of the steps:
+
+1. `distributeFishDaily`: Transform monthly run timing data (and optionally outflow rates) into daily estimates of the proportion of the cohort that is in the dam forebay for each day of the year.
+2. `fetchDPE`: Using a dam passage efficiency table and pool elevation in each day, calculate daily DPE experienced by fish in the forebay.
+3. `distributeFish_outlets`: Of those fish that enter the dam (i.e., the fish present in the forebay multiplied by the DPE in that day), what proportion enter each of the dam outlets? This is calculated in response to the distribution of flow and route attractiveness.
+4. `distributeFlow_Survival_gates`: Calculate survival through each outlet. If survival through some outlet is to be simulated as a function of flow, FBW first calculates flow through that outlet (and, if there are multiple gates splitting the flow, how much flow passes through each gate). Then, flow rates are used to calculate survival rate. 
+5. Optionally: `summarizeFBW`: Roll up passage statistics (dam passage efficiency and survival; DPE and DPS, respectively) from daily timesteps into summary statistics of average annual survival and passage efficiency. This step can be skipped if daily dam passage simulations are sufficient.  
+
+For more details on these, please take a look at the documentation for each function. 
+Every function in the fbwR package has documentation that describes the function and purpose of each step, as well as what arguments the function requires. 
+You can find out more about any particular step of the model by typing `?FUNCTION_NAME` (where `FUNCTION_NAME` is whatever function you want to learn more about. For example, to find out more about the `runFBW` function, type `?fbwR::runFBW`). 
