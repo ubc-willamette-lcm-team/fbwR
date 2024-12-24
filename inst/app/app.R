@@ -9,23 +9,16 @@ library(DT)
 library(openxlsx)
 library(rhandsontable)
 library(shinycssloaders)
-
 # shiny bootstrap
-library(shinyBS) # Allows for hovering tooltips
-
+library(shinyBS)
 # format data tables nicely
 library(formattable)
-
-# Javascript
-library(shinyjs)
 
 ### Install the FBW library
 # devtools::install_git("https://github.com/mairindeith/fbwR")
 # devtools::load_all("../fbwR")
-library(fbwR)
-
-library(shinythemes) # Better looking :) 
-
+# library(fbwR)
+devtools::load_all("../../")
 
 ### Load custom and helper functions -------------------------------------------
 source("R/utils.R")
@@ -64,12 +57,9 @@ ui <- navbarPage(
   fluid = TRUE,
   lang = "en",
   windowTitle = "fbwR Shiny",
-  header = tags$style(type="text/css", "body {padding-top: 100px;}"),
   # Some HTML to allow buttons to float on the page
+  header = tags$style(type="text/css", "body {padding-top: 100px;}"),
   theme = shinytheme("flatly"),
-  # titlePanel(),
-  # (
-  # titlePanel("fbwR Shiny App"),
   tabPanel(value = "app_howto",
     title = "How to use this app", icon = icon("question"),
     fluidRow(
@@ -78,7 +68,8 @@ ui <- navbarPage(
       ),
     # column(1, )
     column(8, offset = 2, 
-      includeHTML("about_app.html")
+      includeHTML("about.html")
+      # tags$iframe("about.html")
       ),
     column(1, offset = 1,
       div(class = "floating-element-r", 
@@ -203,7 +194,7 @@ ui <- navbarPage(
             style = parambox_style,
             span(textOutput(outputId = "wyt_warning"), 
               style = "color:orange; font-size:20px; font-weight:700"),
-            dataTableOutput(outputId = "ressim_preview") %>% 
+            DT::DTOutput(outputId = "ressim_preview") %>% 
               withSpinner()
           ),
           bsCollapsePanel(value = "ressimpicker_bs", 
@@ -557,7 +548,7 @@ ui <- navbarPage(
                   class = "btn-info btn-block",
                   "Download raw results as a .csv"),
                 br(), 
-                dataTableOutput("fbw_res_full", width = "100%"),
+                DT::DTOutput("fbw_res_full", width = "100%"),
                 style = infobox_style
               )
             )
@@ -977,7 +968,7 @@ server <- shinyServer(function(input, output, session) {
     # ressim_dataframe()
   })
 
-  output$ressim_preview <- DT::renderDataTable({
+  output$ressim_preview <- DT::renderDT({
     # req(ressim_dataframe())
     if (is.null(input$ressim_input$datapath)) {
       df <- data.frame(
@@ -2438,8 +2429,8 @@ output$monthly_runtiming <- renderRHandsontable({
         # message("rate based RO figure")
         # message(colnames(ressim_dataframe()))
         example_df <- data.frame(
-          flow = c(0,1000),
-          survival = input$rosurv_rate
+          flow = NA,
+          survival = NA
         )
         # message(example_df[1,])
         ggpl <- ggplot(example_df, aes(x = flow, y = survival,
@@ -2475,9 +2466,17 @@ output$monthly_runtiming <- renderRHandsontable({
           xlim(c(0,1))
         ggplotly(ggpl, tooltip = "text")
     } else if(input$rosurv_type == "table") {
-      example_df <- param_list$ro_surv_table %>%
-        rename(`Low pool` = ro_surv_low,
-          `High pool` = ro_surv_high)
+      if (nrow(example_df) == 0) {
+        example_df <- data.frame(
+          flow = numeric(NA),
+          ro_surv_low = numeric(NA),
+          ro_surv_high = numeric(NA)
+        )
+      } else {
+        example_df <- example_df %>%
+          rename(`Low pool` = ro_surv_low,
+            `High pool` = ro_surv_high)
+      }
       ggpl <- ggplot(example_df, aes(x = flow,
         group = 1, text = paste0("Flow: ", flow, "<br>Low pool survival rate: ", `Low pool`, "<br>High pool survival rate: ", `High pool`))) +
         geom_line(lwd = 1.2, aes(y = `Low pool`), color = "#00868B") + 
@@ -2509,8 +2508,8 @@ output$monthly_runtiming <- renderRHandsontable({
       if (input$turbsurv_type == "rate") {
         req(input$turbsurv_rate)
         example_df <- data.frame(
-          flow = c(0,1000),
-          survival = input$turbsurv_rate
+          flow = NA,
+          survival = NA
         )
         # message(example_df[1,])
         ggpl <- ggplot(example_df, aes(x = flow, y = survival,
@@ -2546,8 +2545,15 @@ output$monthly_runtiming <- renderRHandsontable({
           xlim(c(0,1))
         ggplotly(ggpl, tooltip = "text")
     } else if(input$turbsurv_type == "table") {
-      example_df <- param_list$turb_surv_table %>%
-        rename(survival = turb_surv)
+      if (nrow(example_df) == 0) {
+        example_df <- data.frame(
+          flow = numeric(NA),
+          survival = numeric(NA)
+        )
+      } else {
+        example_df <- example_df %>%
+          rename(survival = turb_surv)
+      }
       ggpl <- ggplot(example_df, aes(x = flow, y = survival,
         group = 1, 
           text = paste0("Flow: ", flow, "<br>Survival: ", survival))) +
@@ -2577,8 +2583,8 @@ output$monthly_runtiming <- renderRHandsontable({
       if (input$spillsurv_type == "rate") {
         req(input$spillsurv_rate)
         example_df <- data.frame(
-          flow = c(0,1000),
-          survival = input$spillsurv_rate
+          flow = NA,
+          survival = NA
         )
         # message(example_df[1,])
         ggpl <- ggplot(example_df, aes(x = flow, y = survival,
@@ -2614,8 +2620,16 @@ output$monthly_runtiming <- renderRHandsontable({
           xlim(c(0,1))
         ggplotly(ggpl, tooltip = "text")
     } else if(input$spillsurv_type == "table") {
-      example_df <- param_list$spill_surv_table %>%
-        rename(survival = spill_surv)
+      example_df <- param_list$spill_surv_table
+      if (nrow(example_df) == 0) {
+        example_df <- data.frame(
+          flow = numeric(NA),
+          survival = numeric(NA)
+        )
+      } else {
+        example_df <- example_df %>%
+          rename(survival = spill_surv)
+      }
       ggpl <- ggplot(example_df, aes(x = flow, y = survival,
         group = 1, 
           text = paste0("Flow: ", flow, "<br>Survival: ", survival))) +
@@ -2645,8 +2659,8 @@ output$monthly_runtiming <- renderRHandsontable({
       if (input$fpssurv_type == "rate") {
         req(input$fpssurv_rate)
         example_df <- data.frame(
-          flow = c(0,1000),
-          survival = input$fpssurv_rate
+          flow = numeric(NA),
+          survival = numeric(NA)
         )
         # message(example_df[1,])
         ggpl <- ggplot(example_df, aes(x = flow, y = survival,
@@ -2683,8 +2697,15 @@ output$monthly_runtiming <- renderRHandsontable({
         ggplotly(ggpl, tooltip = "text")
     } else if(input$fpssurv_type == "table") {
       example_df <- param_list$fps_surv_table 
-      example_df %>%
-        rename(survival = fps_surv)
+      if (nrow(example_df) == 0) {
+        example_df <- data.frame(
+          flow = NA,
+          survival = NA
+        )
+      } else {
+        example_df <- example_df %>%
+          rename(survival = fps_surv)
+      }
       ggpl <- ggplot(example_df, aes(x = flow, y = survival,
         group = 1, 
           text = paste0("Flow: ", flow, "<br>Survival: ", survival))) +
@@ -2951,7 +2972,7 @@ output$monthly_runtiming <- renderRHandsontable({
     )
   }) # %>% bindEvent(fbw_results$summary_results)
 
-  output$fbw_res_full <- DT::renderDataTable(
+  output$fbw_res_full <- DT::renderDT(
     data.frame(fbw_results$full_results) %>%
       mutate(
         Date = format(Date, "%d-%b-%Y")
@@ -3056,7 +3077,7 @@ output$monthly_runtiming <- renderRHandsontable({
     # shinyjs::click("ressim_create")
     updateNavbarPage(session, inputId = "fbw_navbar",
       selected = "ressim_prev")
-    # shinyjs::click("ressim_create")
+    shinyjs::click("ressim_create")
   })
 
   observeEvent(input$ressim_prev_back, {
