@@ -2,10 +2,10 @@
 % Please edit documentation in R/runApp.r
 \name{runApp}
 \alias{runApp}
-\title{Helper function that launches a local version of the Shiny app}
+\title{Launch a local version of the FBW-R Shiny app}
 \usage{
 runApp()
 }
 \description{
-Helper function that launches a local version of the Shiny app
+Launch a local version of the FBW-R Shiny app
 }

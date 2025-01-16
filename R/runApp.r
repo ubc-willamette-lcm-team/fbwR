@@ -12,8 +12,6 @@
 #' @importFrom DT DTOutput renderDT
 #' @importFrom formattable formattableOutput renderFormattable
 #' @export
-#' @example
-#' fbwR::runApp()
 
 runApp <- function() {
   shiny::runApp(appDir = system.file("app", package = "fbwR"))

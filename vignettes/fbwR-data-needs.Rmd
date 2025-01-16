@@ -8,12 +8,14 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
 fbwR requires three types of inputs: 
 
 1. Hydrological conditions at the dams for each day to be simulated (pool elevation, total outflow, and outflow through each dam outlet),
 2. Parameters describing how the dam operates, including hydrological limits to operation like minimum and maximum pool elevations where the outlet is operated, and
 2. Parameters that describe how fish respond to hydrology and outlet configuration during dam passage. 
+
+This vignette contains a brief description of the parameters needed to run the fbwR model.
+More details are given in the parameter template and throughout the Shiny app's help boxes.
 
 ### Hydrological information
 
@@ -32,10 +34,10 @@ fbwR is designed to input ResSim results as an Excel Spreadsheet with the follow
 
 | Date | 1946 | 1947 | ... | 2020 | 
 | +--- | +--- | +--- | +--- | +--- |
-| Jan 1  | 1619 | 1610 |	... | 	1530 |
-| Jan 2  | 1614 | 1540 |	... | 	1537 |
-| ... 	 | ...  |	... |	... | 	... |
-| Dec 31 | 1542 | 1532 |	... | 	1539 |
+| Jan 1  | 1619 | 1610 |... | 1530 |
+| Jan 2  | 1614 | 1540 |... | 1537 |
+| ...  | ...  |... |... | ... |
+| Dec 31 | 1542 | 1532 |... | 1539 |
 
 To read in ResSim data, use the `loadResSim()` function: 
 
@@ -55,7 +57,6 @@ loadResSim(infile = "PATH_TO_ResSim_SPREADSHEET.xlsx",
   rosheet = "NAME_OF_REGULATING_OUTLET_FLOW_SHEET",
   spillsheet = "NAME_OF_SPILLWAY_FLOW_SHEET")
 ```
-
 
 ### Water year type classifications
 
@@ -79,8 +80,20 @@ fbwR expects water year type information to be provided in the following format:
 
 ### Dam operating rules
 
-fbwR also takes in information about dam operation and any fish passage structures that might be implemented. 
+fbwR also takes in information about dam operation and any fish passage structures that might be implemented.
+
 Fish passage structures are typically designed to collect fish in the forebay so they can be transported to downstream release locations (but they may also redirect fish to save outlets or bypass them to the dam tailrace). 
+fbwR requires information about the minimum and maximum pool elevations where the fish passage structure is operational, maximum flow rate through the structure, and (if relevant) dates of operation in each year.
+fbwR also requires information about fish passage survival through the structure (see the following section for more details).
+fbwR can also simulate dam passage at projects where nets block fish from entering the regulating outlets and powerhouse. 
+
+In addition, fbwR requires information about how permanent dam outlets--the spillway, regulating outlets, and powerhouse turbines--operate.
+ResSim results inform the model about the distribution of outflow through these outlets; in addition, fbwR requires information about maximum flow, the minimum elevation where the outlet is operational, and minimum and target flow rates. 
+If the outlet has multiple gates, fbwR also requires information about how many gates are present and how flow should be distributed across those gates (e.g., unit to minimum flow, power peaking).
+
+Finally, fbwR requires information about whether temperature operations are in effect at the dam.
+If temperature operations are in effect, the simulation will divert flow from the floating surface structure (FSS) and distributed between temperature control and the fish passage structure.
+The split of flow is determined by a "temp_split" table; this defines the split of flow between the fish passage structure and temperature tower across different dates in the year.
 
 ### Behavioral responses of downstream migranting fish to hydrological conditions and dam operation and other parameters
 
@@ -89,6 +102,37 @@ This includes parameters that describe how pool elevation and flow influence the
 
 The biological and simulation parameters required include: 
 
-1. **Average monthly run timing information**: Month-by-month, what proportion of a cohort is in the forebay of the dam (where a *cohort* is defined as same-size and approximately same-age fish who were spawned in the same year and will attempt passage in the same 12-month period).
+1. **Average monthly run timing information**: Month-by-month, what proportion of a cohort is in the forebay of the dam (where a *cohort* is defined as same-size and approximately same-age fish who were spawned in the same year and will attempt passage in the same 12-month period). You can input both a baseline run timing and an alternative run timing. Baseline run timing reflects conditions without a fish passage structure in place, alternative run timing reflects run timing with the fish passage structure.
 2. **Route fish with flow?**: Should flow rates be used when calculating daily run timing from monthly run timing? If yes, daily proportions of fish in the forebay will be weighted based on the total outflow in each day (as an extreme example, if all of December's outflow in a given year occurred on December 1, routing fish with flow would simulate that all fish attempting passage in December would pass on the 1st). If no, the proportion of migrants that attempt dam passage in each day is uniform across the month (for example, if 30% of the fish attempt passage in a month with 30 days, the proportion of passing fish will be $0.3/30$ or 0.1 in each day of that month). 
-3. **
+3. **Route effectiveness**: Route effectiveness is a measure of the  "attractiveness" of each outlet as a function of the proportion of flow passing through it. An outlet may be more or less attractive than other outlets depending on what proportion of outflow through the dam passes that outlet. It serves as a multiplier--a route effectiveness value of 2 means that the route is twice as attractive to fish than it should be based on flow distribution alone. When 100% of flow passes through an outlet, route effectiveness is 1. If 0% passes through an outlet, its effectiveness is 0. Route effectiveness is input to the model in the form  of a table, with one row for each flow ratio (q_ratio) and one column per outlet (spillway, fish passage structure (FPS), regulating outlet (RO), or turbine (Turb)):
+
+| q_ratio | Spill | FPS | RO | Turb | 
+| +--- | +---+ | +---+ | +---+ | +---+ |
+| 0 | 0 | 0 | 0 | 0 | 
+| 0.1 | ... | ... | ... | ... | 
+| 0.2 | ... | ... | ... | ... |
+| ... | ... | ... | ... | ... |
+| 1 | 1 | 1 | 1 | 1 |
+
+4. **Dam passage efficiency** (DPE) is a measure of the proportion of fish in the forebay that enter the dam at a given pool elevation. DPE varies based on elevation due to changes in which dam outlets are available for passage and how flow distributes to those outlets. This parameter is also input using a table. Each row contains an estimate of DPE at a pool elevation (you can also provide a description of that elevation; for example, "minimum conservation pool"). The DPE input table has multiple columns to store observed or estimated DPE. 
+
+| elev | elev_description | **baseline_dpe** | **fss_dpe** | **fsc_dpe** | **weir_dpe** |
+| +--- | +--- | +---+ | +---+ | +---+ | +---+ | 
+| ... | ... | ... | ... | ... | ... |
+
+  First, there is baseline_dpe. Baseline DPE refers to the DPE when there is no fish passage structure in place, or if the pool elevation falls outside the range of the minimum and maximum operating elevations for the passage structure. There are also columns for several FPS types: FSS, FSC, and weir. When you use the table, if you are simulating an FPS you have to tell the model which column in the DPE table to use. 
+
+5. **Passage survival** is the final biological parameter required by FBW. For each outlet type -- fish passage structure, spillway, regulating outlet, and turbine -- you can define survival either as a fixed rate, or as a function of flow. If parameterizing survival as a function of flow, you input survival rates as a table. For the spillway, fish passage structure, and powerhouse outlets, the survival table has only two columns, flow and survival rate: 
+
+| Flow | Survival |
+| +--- | +--- |
+| ... | ... |
+
+The flow-adjusted survival table looks different for the regulating outlet. This is because some projects in the Willamette Basin have two regulating outlets at two different pool elevations, and survival through the outlets can differ.
+For the regulating outlet survival table, there are three columns, flow, survival rate through the lower RO, and survival rate through the upper RO: 
+
+| Flow | RO Survival (lower) | RO Survival (upper) |
+| +--- | +--- | +--- |
+| ... | ... | ... |
+
+When using flow-adjusted survival through the RO, you also have to tell the FBW model what the pool elevations are for those two outlets. 

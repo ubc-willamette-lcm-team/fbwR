@@ -26,7 +26,8 @@
 calcFishBearingFlow <- function(fish_postDPE, param_list, verbose) {
   fps <- as.character(param_list$alt_desc[["collector"]])
   stopifnot(fps %in% c("NONE", "FSS", "FSC", "FISH WEIR", "FSO"))
-  fish_to_passFPS <- calcFPSFlow(fps, fish_postDPE, param_list)
+  fish_to_passFPS <- calcFPSFlow(fish_postDPE = fish_postDPE, 
+    param_list = param_list, verbose = verbose)
   # "switch" provides different outcomes depending on the value of `fps`
   fishBearingFlow <- switch(as.character(fps),
     # If no collector, simple distribution

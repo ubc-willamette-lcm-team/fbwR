@@ -1,4 +1,4 @@
-# App for reactive elements using navlist
+# Shiny App front-end to the fbwR package
 
 library(shiny)
 library(shinythemes)
@@ -153,7 +153,7 @@ ui <- navbarPage(
             title = "Compile ResSim sheets",
             style = parambox_style,
             uiOutput(outputId = "ressim_sheetselect_ui") %>% 
-              withSpinner()
+              withSpinner(type = 3, color.background = "white", color = "grey")
           )
 
           # bsCollapsePanel(value = "ressim_preview_panel",
@@ -162,7 +162,7 @@ ui <- navbarPage(
           #   span(textOutput(outputId = "wyt_warning"), 
           #     style = "color:orange; font-size:20px; font-weight:700"),
           #   dataTableOutput(outputId = "ressim_preview") %>% 
-          #     withSpinner()
+          #     withSpinner(type = 3, color.background = "white", color = "grey")
           # )
         )
       ), 
@@ -188,26 +188,28 @@ ui <- navbarPage(
               icon = icon("arrow-left"), class = backnext_style))
         ),
         column(10, # offset = 1,
+          htmlOutput(outputId = "wyt_template_warning2"),
         bsCollapse(multiple = TRUE, open = c("ressimpicker_bs", "ressimplot_bs"),
           bsCollapsePanel(value = "ressim_preview_panel",
             title = "View compiled ResSim data in long/table format",
             style = parambox_style,
+            # Add a warning if parameter values are overwriting WYT
             span(textOutput(outputId = "wyt_warning"), 
               style = "color:orange; font-size:20px; font-weight:700"),
             DT::DTOutput(outputId = "ressim_preview") %>% 
-              withSpinner()
+              withSpinner(type = 3, color.background = "white", color = "grey")
           ),
           bsCollapsePanel(value = "ressimpicker_bs", 
             title = "Select ResSim plotting options",
             uiOutput(outputId = "ressim_plotselect_ui") %>% 
-                withSpinner(),
+                withSpinner(type = 3, color.background = "white", color = "grey"),
             style = parambox_style
           ),
           bsCollapsePanel(value = "ressimplot_bs", 
             title = "Plotted ResSim data",
             helpText("If the loading spinner is stuck 'on' here, or if you see an error message, check that you compiled the ResSim datasheets in the previous tab"),
             uiOutput(outputId = "ressim_plots") %>% 
-                  withSpinner(),
+                  withSpinner(type = 3, color.background = "white", color = "grey"),
             style = infobox_style
           )
         )),
@@ -235,7 +237,7 @@ ui <- navbarPage(
           h2("There are two ways to enter fish passage parameters in to this app:"),
           h4("1: Enter parameters manually (click 'Next' to begin entering parameters by hand. You can return to this page later to save your parameter inputs in template format)"), 
           # using a template Excel file (.xlsx) and uploading the template on this page."),
-          h4("2: Use a parameter template (use this page)"),
+          h4("2: Upload a FBW parameter template on this page (you can download a template and fill it in, or upload a saved file from a previous session)"),
           hr(),
           # h4("Below, you can download a blank parameter template, upload a previously filled-in template, and save your current parameters in template format (so you can return to this tab and upload files in a future model run."),
           fluidRow(
@@ -251,7 +253,10 @@ ui <- navbarPage(
                   icon = icon("download"), class = "btn-info btn-block", width = "100%"),
                 hr(),
                 fileInput(inputId = "upload_parambutton", width = "100%",
+                  buttonLabel = "Select file...",
                   label = "If you have already filled in a parameter template or have one saved from a previous session, upload it here."),
+                # Warning text if water year type is included in the parameter list
+                htmlOutput("wyt_template_warning"),
                 style = parambox_style
               ))
             ),
@@ -278,7 +283,7 @@ ui <- navbarPage(
     # "or define parameters manually",
     
     "----",
-    "Or upload manually:",
+    "...or enter parameter values manually:",
 
     tabPanel(title = "Step 1. Dam passage/outlet settings", 
       value = "params_outlets",
@@ -314,7 +319,7 @@ ui <- navbarPage(
               fluidRow(
                 column(12,
                   rHandsontableOutput(outputId = "routerules_hot")
-                    # withSpinner()
+                    # withSpinner(type = 3, color.background = "white", color = "grey")
                 )
               ),
               style = parambox_style
@@ -525,11 +530,11 @@ ui <- navbarPage(
                   "Download monthly results as a .csv (the two tables below will be combined into a single table)"),
                 h4("Average monthly flow (cfs)"),
                 formattableOutput("fbw_res_summary_monthly_flow", width = "100%") %>%
-                  withSpinner(),
+                  withSpinner(type = 3, color.background = "white", color = "grey"),
                 plotlyOutput("summary_sankey_flow", width = "100%"),
                 h4("Average monthly fish distribution and survival"),
                 formattableOutput("fbw_res_summary_monthly_surv", width = "100%") %>%
-                  withSpinner(),
+                  withSpinner(type = 3, color.background = "white", color = "grey"),
                 plotlyOutput("summary_sankey_surv", width = "100%"),
                 style = parambox_style
               ),
@@ -540,10 +545,10 @@ ui <- navbarPage(
                   "Download water year type results as a .csv"),
                 br(), 
                 formattableOutput("fbw_res_summary_wyt", width = "100%") %>%
-                  withSpinner(),
+                  withSpinner(type = 3, color.background = "white", color = "grey"),
                 style = parambox_style),
               bsCollapsePanel(value = "full_res",
-                title = "Unsummarized FBW results (daily for each day in the period of record)",
+                title = "Unsummarized FBW results (daily over the period of record)",
                 downloadButton("download_full_results", 
                   class = "btn-info btn-block",
                   "Download raw results as a .csv"),
@@ -559,7 +564,7 @@ ui <- navbarPage(
 )
 
 ### SERVER ---------------------------------------------------------------------
-server <- shinyServer(function(input, output, session) {
+server <- function(input, output, session) {
   ### Global reactive parameter lists
   # Increase maximum upload file size
   options(shiny.maxRequestSize=30*1024^2)
@@ -574,7 +579,7 @@ server <- shinyServer(function(input, output, session) {
     ressim <- data.frame()
     # Modified from loadResSim
     if (!is.null(input$ressim_input$datapath)) {
-      ressim <- fbwR::loadResSim(infile = input$ressim_input$datapath,
+      ressim <- fbwR::loadResSim(file = input$ressim_input$datapath,
         wide = input$ressim_wide,
         elevsheet = input$ressim_pool,
         outflowsheet = input$ressim_outflow,
@@ -585,6 +590,7 @@ server <- shinyServer(function(input, output, session) {
       # New features: 
       # Load water year type and temp. dist
       if (!is.null(input$wyt_input$datapath)) {
+        message("Water year types from custom water year type .csv file")
         wyt <- read.csv(file = input$wyt_input$datapath, header = input$wyt_header,
           skip = input$wyt_skiprows)
         wyt <- wyt[, 1:2]
@@ -593,8 +599,24 @@ server <- shinyServer(function(input, output, session) {
           mutate(Year = lubridate::year(Date)) %>%
           left_join(x = ., y = wyt, by = "Year") %>%
           select(!Year)
+        wyt_template_warning_text(paste0(""))
       } else {
-        if (!is.na(input$ressim_tempsplit)) {
+        if (!(all(dim(param_list$water_year_types)) == 0) & 
+          !(all(is.na(param_list$water_year_types$type))) & 
+          !(all(is.na(param_list$water_year_types$year)))) {
+          message("Water year types from parameter list")
+          ressim <- ressim %>% 
+            mutate(year = lubridate::year(Date)) %>%
+            left_join(x = ., y = param_list$water_year_types, by = "year") %>%
+            select(!year) %>%
+            rename(WaterYearType = type)
+          # Update warning to tell the user that the app has overwritten ResSim WYTs
+          wyt_template_warning_text(paste0("<font color=\"#e05959\"><b>",
+            "Warning: Water year types provided in the parameter template have overwritten those provided in the ResSim upload step!\n",
+            "</b></font>"))
+        } else if (!is.na(input$ressim_tempsplit)) {
+          message("Water year types from ResSim temperature split")
+          wyt_template_warning_text(paste0(""))
           tempsplit <- suppressMessages(
             readxl::read_excel(input$ressim_input$datapath, 
               sheet = input$ressim_tempsplit))
@@ -604,7 +626,6 @@ server <- shinyServer(function(input, output, session) {
             substring(X, first = 1,
               last = regexpr(X, pattern = "...", fixed = TRUE)[1] - 1)})
           # There will be some extra columns which begin with ".." now, remove these
-          #   after searching with regular expressions via grep()
           year_types <- year_types[-which(year_types == "")]
           names(year_types) <- as.numeric(tempsplit[6, 2:(1 + length(year_types))])
           wyt <- data.frame(
@@ -617,17 +638,20 @@ server <- shinyServer(function(input, output, session) {
             left_join(x = ., y = wyt, by = "Year") %>%
             select(!Year)
         } else {
+          message("NA")
           ressim <- ressim %>%
             mutate(WaterYearType = NA)
+          # If there are water year types in the parameter list, use these
         }
-      }
+    }
     ressim
     }
   # bindEvent links this to ressim_create so it only "activates" when the upload
   # is completed
   }) %>% bindEvent({
-    input$ressim_create
-    input$ressim_next
+    list(input$ressim_create,
+    input$ressim_next,
+    param_list[["water_year_types"]])
   })
 
   unique_wyt_list <- reactive({
@@ -802,7 +826,39 @@ server <- shinyServer(function(input, output, session) {
     param_list$spill_surv_table <- param_list_in$spill_surv_table
     param_list$fps_surv_table <- param_list_in$fps_surv_table
     param_list$temp_dist <- param_list_in$temp_dist
-    param_list$water_year_types <- param_list_in$water_year_types
+    if (all(dim(param_list_in$water_year_types)) == 0 | 
+      all(is.na(param_list_in$water_year_types$type)) | 
+      all(is.na(param_list_in$water_year_types$year))) {
+      # If the parameter entry template is blank, revert to the ressim inputs
+      param_list$water_year_types <- data.frame(
+        year = as.numeric(lubridate::year(ressim_dataframe()$Date)),
+        type = ressim_dataframe()$WaterYearType) %>% dplyr::distinct()
+      wyt_template_warning_text(paste0(""))
+    } else {
+      # If the parameter entry is not blank, set this to the param_list WYT
+      #  AND overwrite ressim_dataframe()
+      # The overwriting happens in the ressim_dataframe() reactive object
+      param_list$water_year_types <- param_list_in$water_year_types
+      param_list$water_year_types$year <- as.numeric(param_list_in$water_year_types$year)
+      wyt_template_warning_text(paste0("<font color=\"#e05959\"><b>",
+        "Warning: Water year types provided in the parameter template have overwritten those provided in the ResSim upload step!\n",
+        "<br></b></font>"))
+      shinyjs::click(input$ressim_create)
+      # This can't be overwritten here; overwrite in the reactive() section
+      # ressim_copy <- isolate(ressim_dataframe())
+      # ressim_copy$Year <- lubridate::year(ressim_copy$Date)
+      # ressim_copy$WaterYearType <- param_list$water_year_types$type[
+      #     match(ressim_copy$Year, param_list$water_year_types$year)
+      #   ]
+      # # Overwrite the original ResSim dataframe
+      # ressim_dataframe()$WaterYearType <- ressim_copy$WaterYearType
+      # req(ressim_dataframe())
+      # ressim_dataframe()$Year <- 
+      # ressim_dataframe()$WaterYearType <- param_list$water_year_types[
+      #   match(ressim_dataframe()$Year, param_list$water_year_types$year)
+      # ]
+      # ressim_dataframe() <- ressim_dataframe() %>% select(-Year)
+    }
     #  [1] "alt_desc"          "route_specs"       "route_eff"        
     #  [4] "route_dpe"         "monthly_runtiming" "ro_surv_table"
     #  [7] "ro_elevs"          "turb_surv_table"   "spill_surv_table"
@@ -943,7 +999,7 @@ server <- shinyServer(function(input, output, session) {
       ),
       column(3),
       column(6,
-        p("Usually, ResSim inputs are in wide format (see the orange information panel above for more details). FBW will transform ResSim inputs from wide into long format unless this box is unchecked."),
+        p("Usually, ResSim inputs are in wide format (see the blue information box above for more details on 'wide' versus 'long' data formats). If this box is checked, FBW will transform ResSim inputs from wide into long format."),
         checkboxInput(inputId = "ressim_wide", label = "ResSim results in wide format", value = TRUE),
         actionButton(inputId = "ressim_create", 
           label = "Compile ResSim and water year type data",
@@ -958,7 +1014,7 @@ server <- shinyServer(function(input, output, session) {
   output$wyt_warning <- renderText({
     req(ressim_dataframe())
     if (is.null(input$wyt_input) & all(is.na(ressim_dataframe() %>% select(WaterYearType)))) {
-      return("Warning! No file provided for water year type, filling all years with 'NA'")
+      return("Warning! No file provided for water year type, filling all years with 'NA'<br>If water year types are included in the parameter file provided to this app, you can ignore this message.")
     } else {
       return("")
     }
@@ -1178,6 +1234,42 @@ server <- shinyServer(function(input, output, session) {
     HTML(warning)
   })
 
+  wyt_template_warning_text <- reactiveVal(
+    paste0("")
+  )
+  # wyt_template_warning_text <- reactive({
+  #   req(input$upload_parambutton)
+  #   req(param_list$water_year_types)
+  #   req(ressim_dataframe())
+  #   # If there is no WYT data in the ressim() object, no warning
+  #   if (all(is.na(ressim_dataframe()$WaterYearType))) {
+  #     paste0("")
+  #   # Alternatively, if there is no WYT data in the parameter sheet, no warning 
+  #   } else if (!(all(dim(param_list$water_year_types)) == 0) & 
+  #     !(all(is.na(param_list$water_year_types$type))) & 
+  #     !(all(is.na(param_list$water_year_types$year)))) {
+  #     message("is.na wyt type? ", is.na(param_list$water_year_types$type))
+  #     message(param_list$water_year_types$type[1])
+  #     message("is.na wyt year? ", is.na(param_list$water_year_types$year))
+  #     message(param_list$water_year_types$year[1])
+    # paste0("<font color=\"#e05959\"><b>",
+    # "Warning: Water year types provided in the parameter template have overwritten those provided in the ResSim upload step!\n",
+    # "</b></font>")
+    # } else { 
+  #     message("WYT is NA in parameter list")
+  #     paste0("")
+  #   }
+  # })
+  output$wyt_template_warning <- renderText({
+    # Read the warning text value; this will update as the parameter inputs are read
+    warning <- wyt_template_warning_text()
+    HTML(warning)
+  })
+  output$wyt_template_warning2 <- renderText({
+    # Read the warning text value; this will update as the parameter inputs are read
+    warning <- wyt_template_warning_text()
+    HTML(warning)
+  })
   output$input.in_fps_alternative <- renderUI({
     selectInput(inputId = "in_fps_alternative", 
       label = "Is fish run timing affected by a fish passage structure?",
@@ -1350,7 +1442,6 @@ server <- shinyServer(function(input, output, session) {
   # RO
   output$input.ro_surv <- renderUI({
     req(input$rosurv_type)
-    # message(input$rosurv_type)
     if(is.na(input$rosurv_type) || input$rosurv_type == "table") {
       bsCollapse(open = "Build the survival table",
         bsCollapsePanel(title = "Build the survival table",
@@ -1791,7 +1882,6 @@ server <- shinyServer(function(input, output, session) {
   observeEvent(input$rosurv_hot, {
     rosurv_mod <- hot_to_r(input$rosurv_hot)
     param_list$ro_surv_table <- rosurv_mod
-    message(param_list$ro_surv_table[1,])
   })
   # Turb
   observeEvent(input$turbsurv_hot, {
@@ -1819,42 +1909,65 @@ server <- shinyServer(function(input, output, session) {
   # RO
   observeEvent(input$rosurv_addrow, {
     DF <- param_list$ro_surv_table
-    param_list$ro_surv_table <- rbind(DF,
-      rep(NA, ncol(DF)))
+      param_list$ro_surv_table <- rbind(DF,
+        rep(NA, ncol(DF)))
+      colnames(param_list$ro_surv_table) <- c("flow", "ro_surv_low", "ro_surv_high")
   })
   observeEvent(input$rosurv_rmrow, {
     DF <- param_list$ro_surv_table
-    param_list$ro_surv_table <- DF[-nrow(DF), ] 
+    if (nrow(DF) > 1) {
+      param_list$ro_surv_table <- DF[-nrow(DF), ] 
+    }
   })
   # Turb
   observeEvent(input$turbsurv_addrow, {
     DF <- param_list$turb_surv_table
-    param_list$turb_surv_table <- rbind(DF,
-      rep(NA, ncol(DF)))
+      param_list$turb_surv_table <- rbind(DF,
+        rep(NA, ncol(DF)))
+      colnames(param_list$turb_surv_table) <- c("flow", "turb_surv")
   })
   observeEvent(input$turbsurv_rmrow, {
     DF <- param_list$turb_surv_table
-    param_list$turb_surv_table <- DF[-nrow(DF), ] 
+    if (nrow(DF) > 1) {
+      param_list$turb_surv_table <- DF[-nrow(DF), ] 
+    }
   })
   # Spill
   observeEvent(input$spillsurv_addrow, {
     DF <- param_list$spill_surv_table
-    param_list$spill_surv_table <- rbind(DF,
-      rep(NA, ncol(DF)))
+    # if (all(is.na(colnames(DF)))) {
+      # }
+      param_list$spill_surv_table <- rbind(DF,
+        rep(NA, ncol(DF)))
+      colnames(param_list$spill_surv_table) <- c("flow", "spill_surv")
   })
   observeEvent(input$spillsurv_rmrow, {
     DF <- param_list$spill_surv_table
-    param_list$spill_surv_table <- DF[-nrow(DF), ] 
+    if (nrow(DF) > 1) {
+      param_list$spill_surv_table <- DF[-nrow(DF), ] 
+    }
   })
   # FPS
   observeEvent(input$fpssurv_addrow, {
     DF <- param_list$fps_surv_table
-    param_list$fps_surv_table <- rbind(DF,
-      rep(NA, ncol(DF)))
+    message(dim(DF))
+    if(dim(DF)[1] == 0) {
+      param_list$fps_surv_table <- data.frame(
+        flow = 0,
+        fps_surv = 0
+      )
+    } else {
+      # This is required in case the columns have been replaced with NA
+      param_list$fps_surv_table <- rbind(DF,
+        rep(NA, ncol(DF)))
+    }
+    # colnames(param_list$fps_surv_table) <- c("flow", "fps_surv")
   })
   observeEvent(input$fpssurv_rmrow, {
     DF <- param_list$fps_surv_table
-    param_list$fps_surv_table <- DF[-nrow(DF), ] 
+    if (nrow(DF) > 1) {
+      param_list$fps_surv_table <- DF[-nrow(DF), ] 
+    }
   })
 
   # Warning text for when the elevations of the two ROs are incorrect
@@ -1879,6 +1992,11 @@ server <- shinyServer(function(input, output, session) {
   # Warning text for when the elevations of the two ROs are incorrect
   fbw_warning_text <- reactive({
     missing_params <- c()
+    # ResSim
+    if (nrow(ressim_dataframe()) == 0) {
+      missing_params <- append(missing_params, 
+          "ResSim dataframe has zero rows")
+    }
     # Alt descriptions
     if (is.null(param_list$alt_desc[["fp_alternative"]]) | 
       is.na(param_list$alt_desc[["fp_alternative"]])) {
@@ -1920,7 +2038,6 @@ server <- shinyServer(function(input, output, session) {
     }
 
     # Monthly run timing should sum to 1
-    message(colSums(param_list$monthly_runtiming[, 2:3]))
     if (any(is.na(colSums(param_list$monthly_runtiming[, 2:3]))) | 
       any (colSums(param_list$monthly_runtiming[, 2:3]) != 1)) {
       missing_params <- append(missing_params, 
@@ -1957,19 +2074,19 @@ server <- shinyServer(function(input, output, session) {
             hr(),
             # dataTableOutput(outputId = "ressimsubset_preview"),
             plotlyOutput(outputId = "ressim_elev_vs_outflow") %>% 
-              withSpinner()
+              withSpinner(type = 3, color.background = "white", color = "grey")
           ),
           column(4,
             plotlyOutput(outputId = "ressim_elev_vs_powerhouse") %>% 
-              withSpinner()
+              withSpinner(type = 3, color.background = "white", color = "grey")
           ),
           column(4,
             plotlyOutput(outputId = "ressim_elev_vs_ro")  %>% 
-              withSpinner()
+              withSpinner(type = 3, color.background = "white", color = "grey")
           ),
           column(4,
             plotlyOutput(outputId = "ressim_elev_vs_spill") %>% 
-              withSpinner()
+              withSpinner(type = 3, color.background = "white", color = "grey")
           )
         )
       })
@@ -2425,14 +2542,10 @@ output$monthly_runtiming <- renderRHandsontable({
       req(input$rosurv_type)
       if (input$rosurv_type == "rate") {
         req(input$rosurv_rate)
-        # req(ressim_dataframe())
-        # message("rate based RO figure")
-        # message(colnames(ressim_dataframe()))
         example_df <- data.frame(
-          flow = NA,
-          survival = NA
+          flow = c(0, 100),
+          survival = rep(input$rosurv_rate, 2)
         )
-        # message(example_df[1,])
         ggpl <- ggplot(example_df, aes(x = flow, y = survival,
           group = 1, text = paste0("Flow: ", flow, "<br>Survival rate: ", survival))) +
           geom_line(lwd = 1.2) + 
@@ -2466,17 +2579,18 @@ output$monthly_runtiming <- renderRHandsontable({
           xlim(c(0,1))
         ggplotly(ggpl, tooltip = "text")
     } else if(input$rosurv_type == "table") {
-      if (nrow(example_df) == 0) {
-        example_df <- data.frame(
-          flow = numeric(NA),
-          ro_surv_low = numeric(NA),
-          ro_surv_high = numeric(NA)
-        )
-      } else {
+      example_df <- param_list$ro_surv_table 
+      # if (nrow(example_df) == 0 | !exists("example_df")) {
+        # example_df <- data.frame(
+        #   flow = numeric(0),
+        #   ro_surv_low = numeric(0),
+        #   ro_surv_high = numeric(0)
+        # )
+      # } else {
         example_df <- example_df %>%
           rename(`Low pool` = ro_surv_low,
             `High pool` = ro_surv_high)
-      }
+      # }
       ggpl <- ggplot(example_df, aes(x = flow,
         group = 1, text = paste0("Flow: ", flow, "<br>Low pool survival rate: ", `Low pool`, "<br>High pool survival rate: ", `High pool`))) +
         geom_line(lwd = 1.2, aes(y = `Low pool`), color = "#00868B") + 
@@ -2491,7 +2605,7 @@ output$monthly_runtiming <- renderRHandsontable({
           y = "Survival rate")
       ggplotly(ggpl, tooltip = "text")    
     }
-  })
+  }) 
 
   output$rosurv_plot_text <- renderText({
     if (input$rosurv_type == "sampler") {
@@ -2511,7 +2625,6 @@ output$monthly_runtiming <- renderRHandsontable({
           flow = NA,
           survival = NA
         )
-        # message(example_df[1,])
         ggpl <- ggplot(example_df, aes(x = flow, y = survival,
           group = 1, text = paste0("Flow: ", flow, "<br>Survival rate: ", survival))) +
           geom_line(lwd = 1.2) + 
@@ -2545,10 +2658,11 @@ output$monthly_runtiming <- renderRHandsontable({
           xlim(c(0,1))
         ggplotly(ggpl, tooltip = "text")
     } else if(input$turbsurv_type == "table") {
-      if (nrow(example_df) == 0) {
+      example_df <- param_list$turb_surv_table 
+      if (nrow(example_df) == 0 | !exists("example_df")) {
         example_df <- data.frame(
-          flow = numeric(NA),
-          survival = numeric(NA)
+          flow = numeric(0),
+          survival = numeric(0)
         )
       } else {
         example_df <- example_df %>%
@@ -2566,7 +2680,7 @@ output$monthly_runtiming <- renderRHandsontable({
           y = "Survival rate")
       ggplotly(ggpl, tooltip = "text")    
     }
-  })
+  }) # %>% bindEvent(input$turbsurv_type, input$turbsurv_addrow, input$turbsurv_rmrow)
 
   output$turbsurv_plot_text <- renderText({
     if (input$turbsurv_type == "sampler") {
@@ -2586,7 +2700,6 @@ output$monthly_runtiming <- renderRHandsontable({
           flow = NA,
           survival = NA
         )
-        # message(example_df[1,])
         ggpl <- ggplot(example_df, aes(x = flow, y = survival,
           group = 1, text = paste0("Flow: ", flow, "<br>Survival rate: ", survival))) +
           geom_line(lwd = 1.2) + 
@@ -2621,10 +2734,10 @@ output$monthly_runtiming <- renderRHandsontable({
         ggplotly(ggpl, tooltip = "text")
     } else if(input$spillsurv_type == "table") {
       example_df <- param_list$spill_surv_table
-      if (nrow(example_df) == 0) {
+      if (nrow(example_df) == 0 | !exists("example_df")) {
         example_df <- data.frame(
-          flow = numeric(NA),
-          survival = numeric(NA)
+          flow = numeric(0),
+          survival = numeric(0)
         )
       } else {
         example_df <- example_df %>%
@@ -2642,7 +2755,7 @@ output$monthly_runtiming <- renderRHandsontable({
           y = "Survival rate")
       ggplotly(ggpl, tooltip = "text")    
     }
-  }) 
+  })  # %>% bindEvent(input$spillsurv_type, input$spillsurv_addrow, input$spillsurv_rmrow)
 
   output$spillsurv_plot_text <- renderText({
     if (input$spillsurv_type == "sampler") {
@@ -2659,10 +2772,9 @@ output$monthly_runtiming <- renderRHandsontable({
       if (input$fpssurv_type == "rate") {
         req(input$fpssurv_rate)
         example_df <- data.frame(
-          flow = numeric(NA),
-          survival = numeric(NA)
+          flow = c(0, 100),
+          survival = rep(input$fpssurv_rate, 2)
         )
-        # message(example_df[1,])
         ggpl <- ggplot(example_df, aes(x = flow, y = survival,
           group = 1, text = paste0("Flow: ", flow, "<br>Survival rate: ", survival))) +
           geom_line(lwd = 1.2) + 
@@ -2696,16 +2808,26 @@ output$monthly_runtiming <- renderRHandsontable({
           xlim(c(0,1))
         ggplotly(ggpl, tooltip = "text")
     } else if(input$fpssurv_type == "table") {
-      example_df <- param_list$fps_surv_table 
-      if (nrow(example_df) == 0) {
-        example_df <- data.frame(
-          flow = NA,
-          survival = NA
-        )
-      } else {
+      example_df <- param_list$fps_surv_table
+      # message(exists("example_df"))
+      # if (dim(example_df)[1] == 0 | !exists("example_df")) {
+      #   example_df <- data.frame(
+      #     flow = c(0,100),
+      #     survival = numeric(NA)
+      #   )
+      # } else {
         example_df <- example_df %>%
           rename(survival = fps_surv)
-      }
+      # }
+      # 
+      # message("FPS table columns: ", colnames(example_df), "...dim: ", dim(example_df))
+      # if (!("survival" %in% colnames(example_df))) {
+      #   example_df <- data.frame(
+      #     flow = 0,
+      #     survival = 0
+      #   )
+      # } else {
+      # }
       ggpl <- ggplot(example_df, aes(x = flow, y = survival,
         group = 1, 
           text = paste0("Flow: ", flow, "<br>Survival: ", survival))) +
@@ -2718,7 +2840,7 @@ output$monthly_runtiming <- renderRHandsontable({
           y = "Survival rate")
       ggplotly(ggpl, tooltip = "text")    
     }
-  }) 
+  }) # %>% bindEvent(input$fpssurv_type, input$fpssurv_addrow, input$fpssurv_rmrow)
 
   output$fpssurv_plot_text <- renderText({
     if (input$fpssurv_type == "sampler") {
@@ -2830,7 +2952,7 @@ output$monthly_runtiming <- renderRHandsontable({
         # `50% elevation exceed.` = color_bar(formattable_fill),
         # ,
         # Approaching
-        area(col = 2:12) ~ function(x) percent(x / 100, digits = 3),
+        area(col = 2:12) ~ function(x) percent(x, digits = 3),
         `% Approaching (baseline)` = color_tile("white", 
           colorspace::lighten(sankeycols$approach, 0.3)),
         `% Approaching (calculated)` = color_tile("white", 
@@ -3052,6 +3174,10 @@ output$monthly_runtiming <- renderRHandsontable({
       # Force closed the compiled inputs
       open = "ressim_preview_panel",
       close = c("ressim_about", "ressim_upload", "ressim_compile"))
+    # This update doesn't compile ressim for some reason
+    #   updateNavbarPage(session, inputId = "fbw_navbar",
+    #     selected = "ressim_prev"
+    # )
   })
 
   observeEvent(input$ressim_input, {
@@ -3129,6 +3255,6 @@ output$monthly_runtiming <- renderRHandsontable({
     updateNavbarPage(session, inputId = "fbw_navbar",
       selected = "params_survival")
   })
-})
+}
 
 shinyApp(ui, server)

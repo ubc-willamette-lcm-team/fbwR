@@ -94,7 +94,6 @@ biol_params <- fbwR::loadFromTemplate(file = "PATH_TO_TEMPLATE")
 ressim_results <- fbwR::loadResSim(file = "PATH_TO_RESSIM")
 ```
 
-
 ### Running the fbwR steps one-at-a-time 
 
 You can also run the fbwR model step-by-step (if you take a look under the hood of the `runFBW` function, you'll notice that all of the below functions are executed there). 

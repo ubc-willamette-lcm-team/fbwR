@@ -25,7 +25,7 @@ example, the distribution of flow through a dam, timing of flow
 operations, and reservoir elevation) and changes to dam structures
 (including the building of fish passage structures).</p>
 <div id="data-requirements" class="section level2">
-<h3>Data requirements</h3>
+<h3>Using the R Shiny Application</h3>
 <p>fbwR requires two types of inputs: hydrological conditions at the dams, and parameters describing how fish respond to hydrology.</p>
 <div id="step1-ressim" class="section level2"></div>
 <h4>Step 1: Upload results of a ResSim hydrological simulation model</h4>
@@ -39,8 +39,13 @@ operations, and reservoir elevation) and changes to dam structures
 <p>Click on the tab labelled "Fish passage parameters" to see the four steps of this process: </p>
 <ol style="list-style-type: decimal">
   <li><strong>Upload parameters from a template</strong>: On this tab, you can upload a pre-filled parameter template and download your input parameters as an Excel file that matches the template format. You can also download a blank template to save to your computer and fill in manually outside of the Shiny app.<br><br><i>If you do not have a parameter template, or want to adjust the parameters you entered, go on to fill in the parameters in three steps:</i></li>
-  <li><strong>Step 1. Dam passage/outlet settings</strong>: Here, enter parameters about how the dam is operated. This includes which dam outlets to simulate, whether a fish passage structure should be simulated, the operational limits of those outlets (e.g., pool elevations where they can pass flow), and outlet attractiveness. For full details, see the </li>
-  <li><strong>Step 2. Monthly run timing and dam passage efficiency</strong>: </li>
-  <li><strong>Step 3. Passage survival</strong>:</li>
+  <li><strong>Step 1. Dam passage/outlet settings</strong>: Here, enter parameters about how the dam is operated. This includes which dam outlets to simulate, whether a fish passage structure should be simulated, the operational limits of those outlets (e.g., pool elevations where they can pass flow), and outlet attractiveness.</li>
+  <li><strong>Step 2. Monthly run timing and dam passage efficiency</strong>: Here, enter tabular data about run timing (both baseline and alternative; alternative run timing is used when a fish passage structure is in place) and dam passage efficiency (DPE) at different elevations and when different fish passage structures are in place.</li>
+  <li><strong>Step 3. Passage survival</strong>: Enter survival parameters for each outlet. First, enter either a fixed survival rate or input survival as a function of flow. If a function of flow, a table will appear that you can fill in with survival parameters across different flow rates through the outlet. **Note:** the flow rate used to calculate survival may reflect multi-gate operations; parameters you enter in the "Dam passage/outlet settings" step will dictate whether flow is distributed between multiple gates for a given outlet.</li>
+<h4>Step 3: Run the FBW model and view/download graphical and tabular simulation results</h4>
+<p>In the final step of the Shiny app, after inputting all of the required hydrological and biological parameters, you can run the passage simulation. There may be warnings at the top of this page - if so, reading the warning should help you identify which parameters may have been specified incorrectly or missing.</p>
+<p>Assuming there are no errors, when you click the "Run fbwR" button, after a moment results will appear. Both summarized and unsummarized results are available to preview and download in tabular format. Summarized results are compiled across the period of record, and monthly averages are shown. Raw results are daily within the period of record.</p>
+<p>Assuming there are no errors, when you click the "Run fbwR" button, after a moment results will appear. Both summarized and unsummarized results are available to preview and download in tabular format. Summarized results are compiled across the period of record, and monthly averages are shown. Raw results are daily within the period of record.</p>
+<p>Fish distribution and survival is also shown in a Sankey plot; this plot is interactive and you may hover over it to see monthly averaged passage and survival rates through the dam outlets.</p>
 </ol>  
 <h2 class="title toc-ignore">Using the Shiny app</h2>

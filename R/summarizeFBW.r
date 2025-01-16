@@ -104,10 +104,10 @@ summarizeFBW <- function(fish_passage_survival) {
     
     # Summary by water year type - computed survival probabilities
     #   First, for all years in the period of record
-    survprob <- fish_passage_survival %>%
+  # message("Class of year in fish_passage_survival: ", class(fish_passage_survival$))  
+  survprob <- fish_passage_survival %>%
       # Merge years and water year type data
-      dplyr::mutate(year = as.character(
-        lubridate::year(.data$Date))) %>%
+      dplyr::mutate(year = lubridate::year(.data$Date)) %>%
       dplyr::left_join(y = attributes(fish_passage_survival)$param_list$water_year_types, by = "year") %>%
       dplyr::group_by(.data$year, .data$type) %>%
       dplyr::summarize(
@@ -153,7 +153,7 @@ summarizeFBW <- function(fish_passage_survival) {
       # Merge years and water year type data
       dplyr::mutate(
         fbw_passageSurvRate = passage_survAllRoutes/approaching_daily,
-        year = as.character(lubridate::year(.data$Date))) %>%
+        year = lubridate::year(.data$Date)) %>%
       dplyr::left_join(y = attributes(fish_passage_survival)$param_list$water_year_types, by = "year") %>%
       dplyr::group_by(.data$year, .data$type, week=lubridate::week(.data$Date)) %>%
       dplyr::summarize(

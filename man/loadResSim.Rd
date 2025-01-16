@@ -56,9 +56,8 @@ overridden by the script? This forces the years to match the defined period
 of record defined in \code{forced_year_range}. Defaults to FALSE, such that errors are returned
 when there are year mismatches.}
 
-\item{forced_year_range}{Useful for debugging; forcibly set the years in the
-period of record; all ResSim and other FBW inputs that do not conform to the
-period of record are forced to have this span.}
+\item{forced_year_range}{If a vector of years is provided here, override the years in the period of record.
+All ResSim and other FBW inputs that do not conform to the period of record are forced to have this span.}
 }
 \description{
 Load data from an Excel ResSim file.
