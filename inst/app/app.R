@@ -576,7 +576,7 @@ server <- function(input, output, session) {
   
   ressim_dataframe <- reactive({
     wide <- input$ressim_wide
-    ressim <- data.frame()
+    ressim <- NULL
     # Modified from loadResSim
     if (!is.null(input$ressim_input$datapath)) {
       ressim <- fbwR::loadResSim(file = input$ressim_input$datapath,
@@ -1993,9 +1993,9 @@ server <- function(input, output, session) {
   fbw_warning_text <- reactive({
     missing_params <- c()
     # ResSim
-    if (nrow(ressim_dataframe()) == 0) {
+    if (is.null(isolate(ressim_dataframe()))) {
       missing_params <- append(missing_params, 
-          "ResSim dataframe has zero rows")
+          "ResSim dataframe has not been uploaded")
     }
     # Alt descriptions
     if (is.null(param_list$alt_desc[["fp_alternative"]]) | 
@@ -2007,13 +2007,13 @@ server <- function(input, output, session) {
       !(param_list$alt_desc[["collector"]] %in% c("FSC", "FSS", "FISH WEIR",
         "FSO", "NONE"))) {
         missing_params <- append(missing_params, 
-          "Alt description: Collector type (must be one of FSC, FSS, FSO, weir, or 'None')")
+          "Alt description: Collector type is missing (must be one of FSC, FSS, FSO, weir, or 'None')")
       }
     if (is.na(param_list$alt_desc[["dpe_column_name"]]) | 
       !(param_list$alt_desc[["dpe_column_name"]]) %in% 
       c("baseline_dpe", "fss_dpe", "fsc_dpe", "weir_dpe")) {
         missing_params <- append(missing_params, 
-          "DPE column selector (indicates which column of the DPE table to use)")
+          "DPE column selector is missing (this indicates which column of the DPE table to use)")
     }
     if (any(dim(param_list$route_dpe) == 0)) {
       missing_params <- append(missing_params, 
