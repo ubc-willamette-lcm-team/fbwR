@@ -14,7 +14,7 @@ calculates dam passage efficiency and survival.
 
 ### Install from a public repository
 
-If the repository is made public, you can install the development version of AHA from GitHub with:
+If the repository is made public, you can install the development version of FBW from GitHub with:
 
 ``` r
 # install.packages("devtools")
