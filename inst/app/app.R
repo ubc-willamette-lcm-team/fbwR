@@ -17,8 +17,8 @@ library(formattable)
 ### Install the FBW library
 # devtools::install_git("https://github.com/mairindeith/fbwR")
 # devtools::load_all("../fbwR")
-# library(fbwR)
-devtools::load_all("../../")
+library(fbwR)
+# devtools::load_all("../../")
 
 ### Load custom and helper functions -------------------------------------------
 source("R/utils.R")
