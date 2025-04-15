@@ -154,7 +154,9 @@ summarizeFBW <- function(fish_passage_survival) {
       dplyr::mutate(
         fbw_passageSurvRate = passage_survAllRoutes/approaching_daily,
         year = lubridate::year(.data$Date)) %>%
-      dplyr::left_join(y = attributes(fish_passage_survival)$param_list$water_year_types, by = "year") %>%
+      dplyr::left_join(y = attributes(fish_passage_survival)$param_list$water_year_types %>%
+        # Edit on April 15, 2025: coerce to numeric 
+        dplyr::mutate(year = as.numeric(year)), by = "year") %>%
       dplyr::group_by(.data$year, .data$type, week=lubridate::week(.data$Date)) %>%
       dplyr::summarize(
         # Average % fish distribution
