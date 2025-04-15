@@ -15,5 +15,5 @@
 
 runApp <- function() {
   # shiny::runApp(appDir = system.file("app", package = "fbwR"))
-  shiny::runApp("inst/shiny/app.R")
+  shiny::runApp("inst/app/app.R")
 }
