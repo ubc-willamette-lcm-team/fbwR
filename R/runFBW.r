@@ -46,9 +46,9 @@
 #' having to create a separate template file. One of `template_path` or
 #' `param_list` must be provided.
 #' @param ressim_file File path to an Excel spreadsheet with ResSim inputs.
-#'  One of `ressim_path` or `ressim_file` must be provided.
+#'  One of `ressim_file` or `ressim` must be provided.
 #' @param ressim A loaded file (e.g., using the `loadResSim` function)
-#' which may be provided instead of `ressim_path`. One of `ressim_path` or
+#' which may be provided instead of `ressim_path`. One of `ressim` or
 #' `ressim_file` must be provided.
 #' @param ressim_wide Are ResSim data in typical wide format? Defaults to TRUE,
 #' which assumes that each column in the dataframe contains data for a single
