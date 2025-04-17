@@ -169,21 +169,22 @@ summarizeFBW <- function(fish_passage_survival) {
       )
 # Annual summaries for life cycle models - summarize by year, including 1-DPE (forebay_postDPE)
 toSLAM_summary <- fish_passage_survival %>% 
-  mutate(Year = lubridate::year(Date)) %>% 
-  group_by(Year) %>% 
+  mutate(Year = lubridate::year(.data$Date)) %>% 
+  group_by(.data$Year) %>% 
   # Unlike above, we can just group by year and sum them together because
   #     each day's population is the proportion of the year's total population
   summarize(
-    annual_FPSSurv = sum(passage_survFPS, na.rm=T),
-    annual_TurbSurv = sum(passage_survTurb, na.rm=T),
-    annual_ROSurv = sum(passage_survRO, na.rm=T),
-    annual_SpillSurv = sum(passage_survSpill, na.rm=T),
-    annual_surv = sum(annual_FPSSurv, annual_TurbSurv, annual_ROSurv, annual_SpillSurv),
-    annual_1_minus_DPE = sum(forebay_postDPE, na.rm=T),
-    annual_passagesurv = annual_surv/(1-annual_1_minus_DPE)
+    annual_FPSSurv = sum(.data$passage_survFPS, na.rm=T),
+    annual_TurbSurv = sum(.data$passage_survTurb, na.rm=T),
+    annual_ROSurv = sum(.data$passage_survRO, na.rm=T),
+    annual_SpillSurv = sum(.data$passage_survSpill, na.rm=T),
+    annual_surv = sum(.data$annual_FPSSurv, .data$annual_TurbSurv, .data$annual_ROSurv, .data$annual_SpillSurv),
+    # Population abundance in the forebay is F.NoPass:
+    annual_1_minus_DPE = sum(.data$F.NoPass, na.rm=T),
+    annual_passagesurv = .data$annual_surv/(1-.data$annual_1_minus_DPE)
   ) %>% 
   # We only need a few columns, remove the others
-  select(Year, annual_surv, annual_1_minus_DPE, annual_passagesurv)
+  select(.data$Year, .data$annual_surv, .data$annual_1_minus_DPE, .data$annual_passagesurv)
 
   return(list(
       monthly_summary = summary_by_month,
