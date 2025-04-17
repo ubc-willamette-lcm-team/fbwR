@@ -78,7 +78,7 @@ runFBW <- function(template_file = NULL, param_list = NULL,
   } else if (!(is.null(ressim_file))) {
     message(paste0(
       "...Loading ResSim from file: ", basename(ressim_file)))
-      ressim <- fbwR::loadResSim(infile = ressim_file, wide = ressim_wide)
+      ressim <- fbwR::loadResSim(file = ressim_file, wide = ressim_wide)
   } else {
     stop("One of param_list or template_file must be provided to runFBW")
   }
