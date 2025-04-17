@@ -3,8 +3,9 @@
 #' daily estimates of at least flow rates, survival rates, pool elevation,
 #' and distribution of fish within the dam's routes. This can be created by 
 #' runFBW() if summarize is set to FALSE.
-#' @return A list containing two objects: a summary by month, and a summary
-#' by water year type in the period of record, including stats::quantiles.
+#' @return A list containing two objects: a summary by month, a summary
+#' by water year type in the period of record, including stats::quantiles, 
+#' and a toSLAM summary which feeds into annual life cycle models.
 #'  
 #' @importFrom lubridate year
 #' @importFrom lubridate month
@@ -35,10 +36,10 @@ summarizeFBW <- function(fish_passage_survival) {
   #    together between years.
   # To do this, all dates in groupingDate have the same (arbitrary) year
   lubridate::year(summary$groupingDate) <- 2000
-  # Start summarizing
+  # Start summarizing to match FBW workbook results
   summary_revised <- summary %>%
     # dplyr lets you summarize by grouping variables:
-    #   Here, group by month and "dummy" date
+    #   Here, group by month and "dummy" date (year-less, day of the year)
     dplyr::group_by(.data$groupingDate, .data$Month) %>%
     dplyr::summarize(
       # Calculate hydrological information
@@ -85,7 +86,7 @@ summarizeFBW <- function(fish_passage_survival) {
       avgDPS_RO = sum(.data$dailyMeanRO_surv),
       avgDPS_Spill = sum(.data$dailyMeanSpill_surv)
     )
-    # Percent fish approaching
+    # Monthly summaries
     summary_by_month <- dplyr::left_join(
       x = summary_revised,
       y = attributes(fish_passage_survival)$param_list$monthly_runtiming %>%
@@ -97,13 +98,13 @@ summarizeFBW <- function(fish_passage_survival) {
         .after = .data$exceedance_flow_cfs) %>%
       dplyr::relocate(.data$approaching_alternative,
         .after = .data$approaching_baseline) %>%
-      # Change the order of the months to match, start with Sept.
+      # Change the order of the months to match workbook, start with Sept.
       dplyr::mutate(Month = factor(.data$Month, levels = c("Sep", "Oct", "Nov",
         "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"))) %>%
       dplyr::arrange(.data$Month)
     
-    # Summary by water year type - computed survival probabilities
-    #   First, for all years in the period of record
+  # Summary by water year type - computed survival probabilities
+  #   First, for all years in the period of record
   # message("Class of year in fish_passage_survival: ", class(fish_passage_survival$))  
   survprob <- fish_passage_survival %>%
       # Merge years and water year type data
@@ -151,7 +152,7 @@ summarizeFBW <- function(fish_passage_survival) {
       dplyr::bind_rows(survprob_wyt) %>%
       dplyr::relocate(.data$type)
       
-  # Finally, group by year in the period of record
+  # Group by year in the period of record
   weekly_survprob <- fish_passage_survival %>%
       # Merge years and water year type data
       dplyr::mutate(
@@ -166,10 +167,30 @@ summarizeFBW <- function(fish_passage_survival) {
         fbw_surv_rate_mean = mean(fbw_passageSurvRate, na.rm = T),
         fbw_surv_rate_sd = sd(fbw_passageSurvRate, na.rm = T)
       )
+# Annual summaries for life cycle models - summarize by year, including 1-DPE (forebay_postDPE)
+toSLAM_summary <- fish_passage_survival %>% 
+  mutate(Year = lubridate::year(Date)) %>% 
+  group_by(Year) %>% 
+  # Unlike above, we can just group by year and sum them together because
+  #     each day's population is the proportion of the year's total population
+  summarize(
+    annual_FPSSurv = sum(passage_survFPS, na.rm=T),
+    annual_TurbSurv = sum(passage_survTurb, na.rm=T),
+    annual_ROSurv = sum(passage_survRO, na.rm=T),
+    annual_SpillSurv = sum(passage_survSpill, na.rm=T),
+    annual_surv = sum(annual_FPSSurv, annual_TurbSurv, annual_ROSurv, annual_SpillSurv),
+    annual_1_minus_DPE = sum(forebay_postDPE, na.rm=T),
+    annual_passagesurv = annual_surv/(1-annual_1_minus_DPE)
+  ) %>% 
+  # We only need a few columns, remove the others
+  select(Year, annual_surv, annual_1_minus_DPE, annual_passagesurv)
 
   return(list(
       monthly_summary = summary_by_month,
-      wyt_surv_summary = survprob_por
+      wyt_surv_summary = survprob_wyt,
+      por_surv_summary = survprob_por,
+      weekly_surv_summary = weekly_survprob,
+      toSLAM_summary = toSLAM_summary
     )
   )
 }
