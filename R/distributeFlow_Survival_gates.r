@@ -65,9 +65,9 @@ distributeFlow_Survival_gates <- function(fish_distributed_outlets,
       fish_distributed_outlets <- fish_distributed_outlets %>%
         dplyr::mutate("{structure}_survival" := structure_surv)
     } else if (is.na(structure_surv)) {
-      warning(paste0("Survival rate through ", " is NA!!"))
+      warning(paste0("Survival rate through ", " is NA! Setting survival to 0 and skipping."))
       fish_distributed_outlets <- fish_distributed_outlets %>%
-        dplyr::mutate("{structure}_survival" := NA)
+        dplyr::mutate("{structure}_survival" := 0)
     } else {
       ### USE TABLE BASED APPROACHES BELOW
       # If there is no gate method AND if there is more than 1 gate, stop 
