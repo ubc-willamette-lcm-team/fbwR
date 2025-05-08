@@ -69,8 +69,28 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
   # It requires linear interpolation, so first create linear 
   # interpolation functions using the supplied Qratio columns
   #   (these are called later)
+  # REVISION: May 8, 2025: If pB.X is all zero, RE is 0.
   ret <- data.frame(param_list$route_eff)
-  if (all(is.na(ret$FPS)) | length(ret$FPS) == 0) {
+  if (all(percentDist$pB.spill == 0)) {
+    spill_RElookup <- function(x) return(0)
+  } else {
+    spill_RElookup <- approxfun(
+      x = ret$q_ratio,
+      y = ret$Spill,
+      rule = 2
+    )
+  } 
+  if (all(percentDist$pB.turb == 0)) {
+    PH_RElookup <- function(x) return(0)
+  } else {
+    PH_RElookup <- approxfun(
+      x = ret$q_ratio,
+      y = ret$Turb,
+      rule = 2
+    )
+  }
+  
+  if (all(is.na(ret$FPS)) | length(ret$FPS) == 0 | all(percentDist$pB.FPS == 0)) {
     fps_RElookup <- function(x) return(0)
   } else {
     # If there are any values:
@@ -80,21 +100,16 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
       rule = 2
     )
   }
-  spill_RElookup <- approxfun(
-    x = ret$q_ratio,
-    y = ret$Spill,
-    rule = 2
-  )
-  RO_RElookup <- approxfun(
-    x = ret$q_ratio,
-    y = ret$RO,
-    rule = 2
-  )
-  PH_RElookup <- approxfun(
-    x = ret$q_ratio,
-    y = ret$Turb,
-    rule = 2
-  )
+  if (all(percentDist$pB.RO == 0)) {
+    RO_RElookup <- function(x) return(0)
+  } else {
+    RO_RElookup <- approxfun(
+      x = ret$q_ratio,
+      y = ret$RO,
+      rule = 2
+    )
+  }
+  
   # Use these functions to lookup RE's and calculate adjusted total
   #   Note: This is termed Denom_Array in FBW VB code
   RETable <- percentDist %>%
@@ -104,6 +119,7 @@ distributeFish_outlets <- function(fish_postDPE, param_list,
       RE.turb = PH_RElookup(.data$pB.turb),
       RE.RO = RO_RElookup(.data$pB.RO),
       RE.FPS = fps_RElookup(.data$pB.FPS),
+      # Calculated adjusted total 
       adj.Total = ((.data$RE.spill * .data$pB.spill) + 
         (.data$RE.FPS * .data$pB.FPS) +
         (.data$RE.RO * .data$pB.RO) + 
